@@ -10,5 +10,14 @@ excecute the same function (ie secondary commands)
 
 def prog_com():
 	print("progcom1")
-	conn = sqlite3.connect(r"./ConsoleMan/progcom.db")
+	conn = sqlite3.connect(r"./ConsoleMan/man.db")
 	c = conn.cursor()
+	c.execute("SELECT * FROM progcom")
+
+	while True:
+		fox = input(">:")
+		for program in c.fetchall():
+			if program == fox[0]:
+				pass
+			elif program == fox[4]:
+				pass
