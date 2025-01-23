@@ -1,0 +1,17 @@
+4
+0
+1111111111111111
+0:/:,5,7,12,15
+1:george:4,6,10
+1:pinky:5
+1:hi:4,8,11
+1:wazzaaa:7,9
+1:whyy:8
+1:test1:5
+1:hitest!:7
+1:testing:4,13
+1:wow!!!:12,14
+1:this-is-a-new-directory:13
+1:bob:4,16
+1:hi:15
+2:file.txt:16,

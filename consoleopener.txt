@@ -1,0 +1,3 @@
+Welcome to CatConsole!
+Edit this message with motd
+ 
