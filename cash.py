@@ -5,26 +5,29 @@ from carmode import carmode
 from REPEATINGCAT import rcat
 #from maze.mazik import mazik
 
+#Setup:
+#   all the functions at the top, then cash function which opens the virt-fs, starts the main loop and refreshes the fs every loop
+#   otherwise, the cash function works very similarly to the main catconsole program. will likely replace CatConsole's default cl
+
 global file
 global context
+# the file object is currently always global, and the fs-lines array will remain local to each individual function. this is so that functions can edit their respective lines array without affecting other functions, as those changes won't take effect until they are truly written to the file
 
-def initFS():
+def initFS():   #writes default base root fs format, circa revision 0. writes to file, then moves the file's pointer back to start again
     initarray = ["4\n","0\n","1111\n","0:/::\n"]
     file.writelines(initarray)
     file.seek(0)
     return
 
-def cd(name):
+def cd(name):   #
     global context
     lines = file.readlines()
     file.seek(0)
-    ls_list = []
-    dir_list = []
-    here = lines[context - 1]
-    hereitems = here.split(",")
-    #print(hereitems, " <-hereitems")
 
-    #see if its .. and act accordingly
+    here = lines[context - 1]   #basically equal to the line of the fs we're currently in
+    hereitems = here.split(",") #array of all the individual components of the current directory
+
+    #see if the command is asking to "cd ..", in which case context is switched to the directory's parent dir (assuming context != root)
     if name == "..":
         if hereitems[0].split(":")[2] != "":
             context = int(hereitems[0].split(":")[2])
@@ -32,13 +35,14 @@ def cd(name):
         else:
             return
 
-    #make sure it exists
+    #make sure the target directory exists
     herels = ret_ls()
     if name not in herels:
         print("No directory named \"" + name + "\"")
         return
-    #make sure it's a directory
 
+    #create array of all the child-objects of the current directory; find which one matches the target directory; make sure the target directory is actually a directory, if so then change context to match
+    dir_list = []
     n = 0
     targetID = 0
     for i in hereitems:
@@ -65,16 +69,15 @@ def cd(name):
     return 1
 
 
-def ret_ls():
-    ls_list = []
-    dir_list = []
+def ret_ls():   #returns an array of all the names of the child objects of context
     lines = file.readlines()
-    #print(lines)
     file.seek(0)
-    here = lines[context-1]
-    #print(here)
-    hereitems = here.split(",")
-    #print(hereitems, " <-hereitems")
+    here = lines[context-1]     #basically equal to the line of the fs we're currently in
+    hereitems = here.split(",") #array of all the individual components of the current directory
+
+    #adds every child object to an array, then makes an array out of just the names of all the child objects (and returns it)
+    ls_list = []
+    dir_list = []               #note: this name is kinda inaccurate since it actually stores any/every of context's child objects, not just the directories
     n = 0
     for i in hereitems:
         if n != 0:
@@ -84,12 +87,12 @@ def ret_ls():
     #print(dir_list, " <-dir_list")
     n = 0
     for i in dir_list:
-        dirname = dir_list[n].split(",")[0].split(":")[1] #for each number in dir_list, go to that line, go to first area before a comma, and go to second area between colons
+        dirname = dir_list[n].split(",")[0].split(":")[1] #for each number in dir_list, go to that line, go to first area before a comma, and go to second area between colons (ie where the name of each child object can be found)
         ls_list.append(dirname)
         n = n + 1
     return ls_list
 
-def ls():
+def ls():   #literally just uses ret_ls() and then outputs to console as one string lol
     local_ret_ls = ret_ls()
     localls = ""
     for i in local_ret_ls:
@@ -97,10 +100,10 @@ def ls():
     print(localls)
     return
 
-def mkdir(name):
+def mkdir(name):    #assuming the new dir name is valid and available: locates closest free fs line on population array (if any, otherwise just adds to it), uses that line for new dir, and adds line# to current dir and makes dir at that line
     lines = file.readlines()
     file.seek(0)
-    #print(lines)
+
     # checking that directory can be created
     if ":" in name or "/" in name or "," in name or "\n" in name or " " in name:
         print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
@@ -110,6 +113,7 @@ def mkdir(name):
         if i == name:
             print("That name already exists")
             return
+
     # looking for closest space available to write/overwrite new directory, modifying population array as appropriate
     n = 0
     dirID = n   # dirID will be in array form (ie if the file line is 5, the notation would be [4]; basically [X + 1])
@@ -132,9 +136,9 @@ def mkdir(name):
         lines[2] = reconstruct + "\n"
         lines.append("")
     #print(lines, dirID)
-    #modifying the context as appropriate
+
+    #modifying the current directory to include the new fs line as a child; finally, actually creating the new content and writing to file
     lines[context - 1] = lines[context - 1].strip() + "," + str(dirID + 1) + "\n"
-    #actually creating the content
     lines[dirID] = "1:" + name + ":" + str(context) + "\n"
     #print(lines)
     file.writelines(lines)
@@ -144,7 +148,8 @@ def mkdir(name):
 def rmdir(name):
     lines = file.readlines()
     file.seek(0)
-    # checking that directory exists
+
+    # checking that directory exists and is valid. assuming it is, execution continues in if block
     if ":" in name or "/" in name or "," in name or "\n" in name or " " in name:
         print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
         return
@@ -154,6 +159,7 @@ def rmdir(name):
         if i == name:
             nameexists = True
     if nameexists:
+
         #checking context subdir by subdir to find which one matches name
         n = 0
         dirID = 0
@@ -164,19 +170,35 @@ def rmdir(name):
                     dirID = int(i)
                     foundID = True
             n = n + 1
+
         #just in case; this SHOULD never happen though, right?? :)
         if foundID != True:
             print("An unexpected error has occurred. Please go cry in a corner as necessary.")
             return
+
+        #make sure object is a directory, and that it has no child directories of its own
+
+        if lines[dirID - 1].strip().split(",")[0].split(":")[0] == "1":
+            n = 0
+            for i in lines[dirID - 1].strip().split(","):
+                n = n + 1
+            if n > 1:
+                print("Error: \"" + name + "\" is not empty.")
+                return
+        else:
+            print("\"" + name +"\": not a directory")
+            return
+
         #delete data at dirID
         lines[dirID - 1] = "\n"
-        #remove name's entry from context
+
+        #remove name's entry from context (aaaaaaaaaa)
         rebuildcontext = ""
         working_rebuildcontext = ""
         skip = False
         commacount = 0
         n = 0
-        for char in lines[context - 1].strip():
+        for char in lines[context - 1].strip():     #working_rebuildcontext           #dude. im not even gonna lie. you're gonna have to figure this for block out on your own. it barely works as it is, i don't even wanna waste time documenting it because im 90% sure imma end up needing to change it later anyways
             if working_rebuildcontext == str(dirID) and char == ",":
                 skip = True
             else:
@@ -198,15 +220,37 @@ def rmdir(name):
                 working_rebuildcontext = working_rebuildcontext + char
             else:
                 print("Uh Oh! The thing that wasn't supposed to happen just happened!")
+                return
 
             if len(lines[context - 1].strip()) == n + 1 and working_rebuildcontext != str(dirID):
-                rebuildcontext = rebuildcontext + "," + working_rebuildcontext + "\n"
+                rebuildcontext = rebuildcontext + "," + working_rebuildcontext
                 working_rebuildcontext = ""
             n = n + 1
             #print(rebuildcontext, working_rebuildcontext, skip, char)
-        #print(lines, rebuildcontext)
+        lines[context - 1] = rebuildcontext + "\n"  #actually do the thing now
+        print(lines, rebuildcontext)
+
         #clear newly freed space from the population array
-        #!!!!!! WORK FROM HERE, JUST FINISH POP. ARRAY !!!!!!
+        n = 0
+        rebuild_poparray = ""
+        for bit in lines[2].strip():
+            if n == (dirID - 1):
+                if int(bit) == 1:
+                    rebuild_poparray = rebuild_poparray + "0"
+                else:
+                    print("How unfortunate. An error has occurred. You should probably go check that")  #lets hope this never happens
+                    return
+            else:
+                rebuild_poparray = rebuild_poparray + bit
+            n = n + 1
+        lines[2] = rebuild_poparray + "\n"
+        print(lines)
+
+        #write to file.
+        file.writelines(lines)
+        file.seek(0)
+
+        #(end of if block, natural return
     else:
         print("No such name: \"" + name + "\"")
         return

@@ -5,12 +5,14 @@ from REPEATINGCAT import rcat
 #from maze.mazik import mazik
 #at some point there will be a custom beginning file that the user can permanantly change, requires changing and reading text files
 
-opener = "consoleopener.txt"
-with open(opener) as nameillneveruseagain:
-    startmsg = nameillneveruseagain.read()
+#opener = "consoleopener.txt"
+#with open(opener) as nameillneveruseagain:
+#    startmsg = nameillneveruseagain.read()
+#print(startmsg)
 
-
-print(startmsg)
+#Setup:
+#   Imports all subprograms, takes variable "fox" as input, and compares it to a list of all commands
+#
 
 while True:
     fox = input(">:")
@@ -33,9 +35,9 @@ while True:
         rcat()
     elif fox == "":
         pass
-    elif fox.lower() == "motd":
-        with open("consoleopener.txt", "r+") as f:
-            f.write(input("  >:"))
+    #elif fox.lower() == "motd":        tbd, might remove for permanent
+    #    with open("consoleopener.txt", "r+") as f:
+    #        f.write(input("  >:"))
     else:
         print('"' + fox + '" is not a recognised command')
         
