@@ -14,4 +14,3 @@
 1:this-is-a-new-directory:13
 1:bob:4,16
 1:hi:15
-2:file.txt:16,

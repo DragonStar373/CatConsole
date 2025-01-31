@@ -1,6 +1,8 @@
 import time
 import sys
 
+from Xlib.ext.record import get_context
+
 from carmode import carmode
 from REPEATINGCAT import rcat
 #from maze.mazik import mazik
@@ -256,6 +258,49 @@ def rmdir(name):
         return
     return
 
+class File:
+    def __init__(self):
+        self.get_context = lambda: globals().get("context") #THEORETICALLY, should set "get context" as a lambda function that returns the updated value every time it gets called
+        self.context = self.get_context()
+        self.get_lines = lambda: self._getLines()   #should call below function,
+        self.lines = self.get_lines()
+
+    def _getLines(self):    #for use in self.get_lines()
+        get_file = lambda: globals().get("file")
+        f = get_file()
+        lines = f.readlines()
+        get_file().seek(0)
+        return lines
+
+    def writeLines(self, lines):    #for any situation needing to write to file, may need to be expanded on to write only specific lines (seek(line), writeline(), seek(0))
+        get_file = lambda: globals().get("file")
+        get_file().writelines(lines)
+        get_file().seek(0)
+        return
+
+    def checkIfFile(self):
+        self.context = self.get_context()
+        self.lines = self.get_lines()
+        lines = self.lines
+        #!!finish!!
+        return True
+
+    def formatFile(self):
+        #automatically format data to be written in required format, ie \n --> \\n, etc
+        return None
+
+    def createFile(self):
+        self.context = self.get_context()
+        self.lines = self.get_lines()
+        self.file.seek(0)
+        lines = self.lines
+        return None
+
+#ensure_exists = open("testing.txt", "a")
+#ensure_exists.close()
+#with open("testing.txt", "r+") as fs:
+#    file = fs
+#    fileOp = File()
 
 def cash():
     global context
@@ -327,12 +372,8 @@ def cash():
                 else:
                     cd(cashcat.split(" ")[1])
 
-
-
             elif cashcat == "ls":
                 ls()
-
-
 
             elif cashcat.split(" ")[0] == "mkdir":
                 if len(cashcat.split(" ")) > 2:
@@ -341,8 +382,6 @@ def cash():
                     print("mkdir: too few arguments")
                 else:
                     mkdir(cashcat.split(" ")[1])
-
-
 
             elif cashcat.split(" ")[0] == "python" or cashcat.split(" ")[0] == "py" or cashcat.split(" ")[0] == "python3":
                 if len(cashcat.split(" ")) < 2:
@@ -362,9 +401,6 @@ def cash():
                                 print("No known variables named \"" + cashcat.split(" ")[2] + "\"")
                     else:
                         print("\"" + cashcat.split(" ")[1] + "\" is not a recognized command, or more likely has not been integrated")
-
-
-
 
             elif cashcat == "car":
                 carmode()
@@ -386,36 +422,6 @@ def cash():
                     f.write(input("  >:"))
             else:
                 print('"' + cashcat + '" is not a recognised command')
-
-
-
-#while True:
-#    fox = input(">:")
-#    if fox == "quit":
-#        break
-#    elif fox == "help":
-#        print("Public Commands:\n  help\n  maze\n  nyan\n  rcat\n  car\n  quit")
-#    elif fox == "car":
-#        carmode()
-#    elif fox == "nyan":
-#        from nyan import nyanfunction
-#
-#        nyanfunction()
-#    elif fox == "maze":
-#        from mazik.mazik import mazik
-#        print("make sure you run catconsole with 'python catconsole.py'")
-#        mazik()
-#    elif fox.lower() == "rcat" or fox.lower() == "repeatingcat":
-#        rcat()
-#    elif fox == "":
-#        pass
-#    elif fox.lower() == "motd":
-#        with open("consoleopener.txt", "r+") as f:
-#            f.write(input("  >:"))
-#    else:
-#        print('"' + fox + '" is not a recognised command')
-#
-#print("Goodbye")
 
 
 
