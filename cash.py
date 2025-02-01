@@ -70,7 +70,6 @@ def cd(name):   #
     print("Something went wrong...")
     return 1
 
-
 def ret_ls():   #returns an array of all the names of the child objects of context
     lines = file.readlines()
     file.seek(0)
@@ -102,6 +101,33 @@ def ls():   #literally just uses ret_ls() and then outputs to console as one str
     print(localls)
     return
 
+def create_child(lines):
+    # looking for closest space available to write/overwrite new directory, modifying population array as appropriate
+    n = 0
+    dirID = n  # dirID will be in array form (ie if the file line is 5, the notation would be [4]; basically [X + 1])
+    reconstruct = ""
+    usingBlankSpace = False
+    # print(len(lines[2].strip())) #<--this is the length of the POPULATION ARRAY!!! NOT lines!!!
+    for item in lines[2].strip():
+        if int(item) == 0 and usingBlankSpace == False:
+            usingBlankSpace = True  # goes thru list of ones & zeroes, converts the first zero it gets to into a 1
+            reconstruct += "1"
+            dirID = n
+        else:
+            reconstruct += item
+        n = n + 1
+    if usingBlankSpace == True:
+        lines[2] = reconstruct + "\n"
+    else:
+        dirID = n
+        reconstruct += "1"
+        lines[2] = reconstruct + "\n"
+        lines.append("")
+
+    lines[context - 1] = lines[context - 1].strip() + "," + str(dirID + 1) + "\n"
+
+    return [lines, dirID]
+
 def mkdir(name):    #assuming the new dir name is valid and available: locates closest free fs line on population array (if any, otherwise just adds to it), uses that line for new dir, and adds line# to current dir and makes dir at that line
     lines = file.readlines()
     file.seek(0)
@@ -116,31 +142,10 @@ def mkdir(name):    #assuming the new dir name is valid and available: locates c
             print("That name already exists")
             return
 
-    # looking for closest space available to write/overwrite new directory, modifying population array as appropriate
-    n = 0
-    dirID = n   # dirID will be in array form (ie if the file line is 5, the notation would be [4]; basically [X + 1])
-    reconstruct = ""
-    usingBlankSpace = False
-    #print(len(lines[2].strip())) #<--this is the length of the POPULATION ARRAY!!! NOT lines!!!
-    for item in lines[2].strip():
-        if int(item) == 0 and usingBlankSpace == False:
-            usingBlankSpace = True      #goes thru list of ones & zeroes, converts the first zero it gets to into a 1
-            reconstruct += "1"
-            dirID = n
-        else:
-            reconstruct += item
-        n = n + 1
-    if usingBlankSpace == True:
-        lines[2] = reconstruct + "\n"
-    else:
-        dirID = n
-        reconstruct += "1"
-        lines[2] = reconstruct + "\n"
-        lines.append("")
-    #print(lines, dirID)
+    create_childOutput = create_child(lines)
+    lines = create_childOutput[0]
+    dirID = create_childOutput[1]
 
-    #modifying the current directory to include the new fs line as a child; finally, actually creating the new content and writing to file
-    lines[context - 1] = lines[context - 1].strip() + "," + str(dirID + 1) + "\n"
     lines[dirID] = "1:" + name + ":" + str(context) + "\n"
     #print(lines)
     file.writelines(lines)
@@ -266,11 +271,12 @@ class File:
         self.lines = self.get_lines()
 
     def _getLines(self):    #for use in self.get_lines()
-        get_file = lambda: globals().get("file")
-        f = get_file()
-        lines = f.readlines()
-        get_file().seek(0)
-        return lines
+        return
+#        get_file = lambda: globals().get("file")
+#        f = get_file()
+#        lines = f.readlines()
+#        get_file().seek(0)
+#        return lines
 
     def writeLines(self, lines):    #for any situation needing to write to file, may need to be expanded on to write only specific lines (seek(line), writeline(), seek(0))
         get_file = lambda: globals().get("file")
@@ -281,26 +287,81 @@ class File:
     def checkIfFile(self):
         self.context = self.get_context()
         self.lines = self.get_lines()
-        lines = self.lines
-        #!!finish!!
-        return True
+        if self.lines[self.context - 1].split(",")[0].split(":")[0] == "2":
+            return True
+        else:
+            return False
 
-    def formatFile(self):
-        #automatically format data to be written in required format, ie \n --> \\n, etc
-        return None
+    def encodeData(self, string):
+        reconstruction = ""
+        for letter in string:
+            if letter == "\\":
+                reconstruction = reconstruction + "\\\\"
+            elif letter == "\n":
+                reconstruction = reconstruction + "\\n"
+            elif letter == ":":
+                reconstruction = reconstruction + "\\:"
+            else:
+                reconstruction = reconstruction + letter
+        return reconstruction
 
-    def createFile(self):
+    def decodeData(self, string):
+        reconstruction = ""
+        last2letters = []
+        letterCount = 0
+        for letter in string:
+            if letterCount < 2:
+                last2letters.append(letter)
+                letterCount = letterCount + 1
+            elif letterCount == 2:
+                if last2letters[0] != "\\":
+                    reconstruction = reconstruction + last2letters[0]
+                    last2letters[0] = last2letters.pop()
+                    letterCount = letterCount - 1
+                else:
+                    if last2letters[1] == "\\":
+                        reconstruction = reconstruction + "\\"
+                        last2letters.remove(1)
+                        last2letters.remove(0)
+                        letterCount = 0
+                    elif last2letters[1] == "n":
+                        reconstruction = reconstruction + "\n"
+                        last2letters.remove(1)
+                        last2letters.remove(0)
+                        letterCount = 0
+                    elif last2letters[1] == ":":
+                        reconstruction = reconstruction + ":"
+                        last2letters.remove(1)
+                        last2letters.remove(0)
+                        letterCount = 0
+                    else:
+                        reconstruction = reconstruction + last2letters[0] + last2letters[1]
+                        last2letters.remove(1)
+                        last2letters.remove(0)
+                        letterCount = 0
+                last2letters.append(letter)
+                letterCount = letterCount + 1
+            else:
+                print("ruh roh")
+                return
+        return reconstruction
+
+    def newFileInLines(self, name):
         self.context = self.get_context()
         self.lines = self.get_lines()
-        self.file.seek(0)
-        lines = self.lines
-        return None
+        newlinesAndDir = create_child(self.lines)
+        self.lines = newlinesAndDir[0]
+        dirID = newlinesAndDir[1]
+        self.lines[dirID] = "2:" + str(name) + ":" + str(context) + "::"
+        return self.lines
 
-#ensure_exists = open("testing.txt", "a")
-#ensure_exists.close()
-#with open("testing.txt", "r+") as fs:
-#    file = fs
-#    fileOp = File()
+    def retFileData(self):
+        pass
+
+fileOp = File()
+
+def test_func():
+    return
 
 def cash():
     global context
@@ -399,6 +460,12 @@ def cash():
                                 print(locals()[cashcat.split(" ")[2]])
                             else:
                                 print("No known variables named \"" + cashcat.split(" ")[2] + "\"")
+                    elif cashcat.split(" ")[1] == "test_func()" or cashcat.split(" ")[1] == "test_func":
+                        if len(cashcat.split(" ")) > 2:
+                            print("print: too many arguments")
+                        else:
+                            test_funcExitCode = test_func()
+                            print("Returned with \"" + str(test_funcExitCode) + "\"")
                     else:
                         print("\"" + cashcat.split(" ")[1] + "\" is not a recognized command, or more likely has not been integrated")
 
