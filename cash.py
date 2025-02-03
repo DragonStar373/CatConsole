@@ -1,11 +1,6 @@
 import time
 import sys
-
-from Xlib.ext.record import get_context
-
-from carmode import carmode
-from REPEATINGCAT import rcat
-#from maze.mazik import mazik
+from cash.fs import fs
 
 #Setup:
 #   all the functions at the top, then cash function which opens the virt-fs, starts the main loop and refreshes the fs every loop
@@ -14,12 +9,6 @@ from REPEATINGCAT import rcat
 global file
 global context
 # the file object is currently always global, and the fs-lines array will remain local to each individual function. this is so that functions can edit their respective lines array without affecting other functions, as those changes won't take effect until they are truly written to the file
-
-def initFS():   #writes default base root fs format, circa revision 0. writes to file, then moves the file's pointer back to start again
-    initarray = ["4\n","0\n","1111\n","0:/::\n"]
-    file.writelines(initarray)
-    file.seek(0)
-    return
 
 def cd(name):   #
     global context
@@ -470,18 +459,21 @@ def cash():
                         print("\"" + cashcat.split(" ")[1] + "\" is not a recognized command, or more likely has not been integrated")
 
             elif cashcat == "car":
-                carmode()
+                #carmode()
+                pass
             elif cashcat == "cash":
                 cash()
             elif cashcat == "nyan":
-                from nyan import nyanfunction
-                nyanfunction()
+                pass
+                #from nyan import nyanfunction
+                #nyanfunction()
             elif cashcat == "maze":
-                from mazik.mazik import mazik
+                #from mazik.mazik import mazik
                 print("make sure you run catconsole with 'python catconsole.py'")
-                mazik()
+                #mazik()
             elif cashcat.lower() == "rcat" or cashcat.lower() == "repeatingcat":
-                rcat()
+                #rcat()
+                pass
             elif cashcat == "":
                 pass
             elif cashcat.lower() == "motd":
