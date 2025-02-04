@@ -107,6 +107,12 @@ class FSIO:
 
     def ret_ls_dirIDs(self):
         pass #maybe returns a dict? array? idk
+    
+class Dir(FSIO):
+    def __init__(self):
+        pass
+
+
 
 #def cd(name):   #
 #    global context
