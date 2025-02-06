@@ -12,11 +12,11 @@ global context
 
 class FSIO:
     global context
+    lines = []
 
     def __int__(self, fileName):
         global context
         self.fileName = fileName
-        self.lines = []
         ensure_exists = open(fileName, "a")
         ensure_exists.close()
 
@@ -25,7 +25,7 @@ class FSIO:
             fsLines = fs.readlines()
             fs.seek(0)
             # print(lines)
-            if len(fsLines) < 1 or (len(fsLines) > 2 and fsLines[1].strip() != "0"):
+            if len(fsLines) < 2 or (len(fsLines) > 1 and fsLines[1].strip() != "0"):
                 self.__init_fs()
                 self.lines = fs.readlines()
                 fs.seek(0)
@@ -104,15 +104,16 @@ class FSIO:
 
         self.lines[context - 1] = self.lines[context - 1].strip() + "," + str(dirID + 1) + "\n"   #add the child object to current dir
 
-        return [dirID]
+        return dirID
 
     def _ret_ls_dirIDs(self):
         pass #maybe returns a dict? array? idk
     
 class Dir(FSIO):
     global context
-    def __init__(self):
-        pass
+    def __init__(self, fileName):
+        super().__init__(fileName)
+        self.lines = self._read_file()
 
     def cd(self, name):  #
         global context
@@ -163,7 +164,7 @@ class Dir(FSIO):
         return 1
 
     def mkdir(self, name):  # assuming the new dir name is valid and available: locates closest free fs line on population array (if any, otherwise just adds to it), uses that line for new dir, and adds line# to current dir and makes dir at that line
-        lines = self._read_file()
+        self.lines = self._read_file()
 
         # checking that directory can be created
         if ":" in name or "/" in name or "," in name or "\n" in name or " " in name:
@@ -175,13 +176,13 @@ class Dir(FSIO):
                 print("That name already exists")
                 return 1
 
-        create_childOutput = self._mk_child_at_context(lines)
-        lines = create_childOutput[0]
+        create_childOutput = self._mk_child_at_context()
+        self.lines = create_childOutput[0]
         dirID = create_childOutput[1]
 
-        lines[dirID] = "1:" + name + ":" + str(context) + "\n"
-        # print(lines)
-        self._write_lines(lines)
+        self.lines[dirID] = "1:" + name + ":" + str(context) + "\n"
+        # print(self.lines)
+        self._write_lines(self.lines)
         return 0
 
     def rmdir(self, name):
@@ -295,21 +296,45 @@ class Dir(FSIO):
             return
         return
 
-class File:
+    def trace_path(self):
+        fslines = self._read_file()
+        currentpath = []
+        tracecontext = context
+        cashpath = ""
+        traced = False
+        while not traced:
+            # print(fslines[tracecontext - 1].split(",")[0].split(":")[0])
+            if fslines[tracecontext - 1].split(",")[0].split(":")[0] != "0":
+                currentpath.append(fslines[tracecontext - 1].split(",")[0].split(":")[1])
+                tracecontext = int(fslines[tracecontext - 1].split(",")[0].split(":")[2])
+            if fslines[tracecontext - 1].split(",")[0].split(":")[0] == "0":
+                traced = True
+                currentpath.append("/")
+                break
+            currentpath.append("/")
+        # print(tracecontext, currentpath)
+        if len(currentpath) < 2:
+            cashpath = currentpath[0]
+        else:
+            for i in currentpath[::-1]:  # reverse of array for loop
+                cashpath = cashpath + i
+        return cashpath
+
+class File(FSIO):
     global context
-    def __init__(self):
+    def __init__(self, fileName):
+        super().__init__(fileName)
         global context
+        self.lines = self._read_file()
 
-
-    def checkIfFile(self):
-        self.context = self.get_context()
-        self.lines = self.get_lines()
-        if self.lines[self.context - 1].split(",")[0].split(":")[0] == "2":
+    def check_if_file(self):
+        lines = self._read_file()
+        if lines[context - 1].split(",")[0].split(":")[0] == "2":
             return True
         else:
             return False
 
-    def encodeData(self, string):
+    def encode_data(self, string):
         reconstruction = ""
         for letter in string:
             if letter == "\\":
@@ -322,7 +347,7 @@ class File:
                 reconstruction = reconstruction + letter
         return reconstruction
 
-    def decodeData(self, string):
+    def decode_data(self, string):
         reconstruction = ""
         last2letters = []
         letterCount = 0
@@ -360,17 +385,25 @@ class File:
                 letterCount = letterCount + 1
             else:
                 print("ruh roh")
-                return
+                return 1
         return reconstruction
 
-    def newFileInLines(self, name):
-        self.context = self.get_context()
-        self.lines = self.get_lines()
-        newlinesAndDir = create_child(self.lines)
-        self.lines = newlinesAndDir[0]
-        dirID = newlinesAndDir[1]
+    def new_file_in_lines(self, name):
+        lines = self._read_file()
+        dirID = self._mk_child_at_context()
         self.lines[dirID] = "2:" + str(name) + ":" + str(context) + "::"
         return self.lines
 
     def retFileData(self):
         pass
+
+
+class FS:
+    def __init__(self, fileName):
+        self.dir = Dir(fileName)
+        self.file = File(fileName)
+
+
+
+
+
