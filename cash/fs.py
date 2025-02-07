@@ -26,7 +26,7 @@ class FSIO:
             fs.seek(0)
             # print(lines)
             if len(fsLines) < 2 or (len(fsLines) > 1 and fsLines[1].strip() != "0"):
-                self.__init_fs()
+                self._init_fs()
                 self.lines = fs.readlines()
                 fs.seek(0)
                 print(fsLines, "!!!!!!")
@@ -49,43 +49,44 @@ class FSIO:
         return 0
 
 
-    def __init_fs(self):  # writes default base root fs format, circa revision 0. writes to file, then moves the file's pointer back to start again
+    def _init_fs(self):  # writes default base root fs format, circa revision 0. writes to file, then moves the file's pointer back to start again
         initarray = ["4\n", "0\n", "1111\n", "0:/::\n"]
-        self.__write_lines(initarray)
+        self._write_lines(initarray)
         self.lines = self._read_file()
         print(self.lines, "!!!!!!")
         return
 
-    def _ret_ls(self):  # returns an array of all the names of the child objects of context
+    def ret_ls(self):  # returns an array of all the names of the child objects of context
         lines = self._read_file()
         here = lines[context - 1]  # basically equal to the line of the fs we're currently in
         hereitems = here.split(",")  # array of all the individual components of the current directory
 
         # adds every child object to an array, then makes an array out of just the names of all the child objects (and returns it)
         ls_list = []
-        dir_list = []  # note: this name is kinda inaccurate since it actually stores any/every of context's child objects, not just the directories
+        child_list = []  # note: this name is kinda inaccurate since it actually stores any/every of context's child objects, not just the directories
         n = 0
         for i in hereitems:
             if n != 0:
-                dir_list.append(lines[int(i) - 1])
-                # print(dir_list, n, i)
+                child_list.append(lines[int(i) - 1])
+                # print(child_list, n, i)
             n = n + 1
-        # print(dir_list, " <-dir_list")
+        # print(child_list, " <-child_list")
         n = 0
-        for i in dir_list:
-            dirname = dir_list[n].split(",")[0].split(":")[1]  # for each number in dir_list, go to that line, go to first area before a comma, and go to second area between colons (ie where the name of each child object can be found)
+        for i in child_list:
+            dirname = i.split(",")[0].split(":")[1]  # for each number in child_list, go to that line, go to first area before a comma, and go to second area between colons (ie where the name of each child object can be found)
             ls_list.append(dirname)
             n = n + 1
         return ls_list
 
     def _mk_child_at_context(self):      #modifies self.lines, returns dirID of child object
         # looking for closest space available to write/overwrite new directory, modifying population array as appropriate
+        lines = self.lines
         n = 0
         dirID = n  # dirID will be in array form (ie if the file line is 5, the notation would be [4]; basically [X + 1])
         reconstruct = ""
         usingBlankSpace = False
         # print(len(lines[2].strip())) #<--this is the length of the POPULATION ARRAY!!! NOT lines!!!
-        for item in self.lines[2].strip():
+        for item in lines[2].strip():
             if int(item) == 0 and usingBlankSpace == False:
                 usingBlankSpace = True  # goes thru list of ones & zeroes, converts the first zero it gets to into a 1
                 reconstruct += "1"
@@ -94,18 +95,21 @@ class FSIO:
                 reconstruct += item
             n = n + 1
         if usingBlankSpace:
-            self.lines[2] = reconstruct + "\n"
+            lines[2] = reconstruct + "\n"
         else:
             dirID = n
             reconstruct += "1"
-            self.lines[2] = reconstruct + "\n"
-            self.lines.append("")
+            lines[2] = reconstruct + "\n"
+            lines.append("")
 
-        self.lines[context - 1] = self.lines[context - 1].strip() + "," + str(dirID + 1) + "\n"   #add the child object to current dir
+        lines[context - 1] = self.lines[context - 1].strip() + "," + str(dirID + 1) + "\n"   #add the child object to current dir
+        #lines.append("\n")
+        print("Testing!!! (_mk_child_at_context) lines = " + str(lines))
+        self.lines = lines
 
         return dirID
 
-    def _ret_ls_dirIDs(self):
+    def ret_ls_dirIDs(self):
         pass #maybe returns a dict? array? idk
     
 class Dir(FSIO):
@@ -130,7 +134,7 @@ class Dir(FSIO):
                 return 0
 
         # make sure the target directory exists
-        herels = self._ret_ls()
+        herels = self.ret_ls()
         if name not in herels:
             print("No directory named \"" + name + "\"")
             return 1
@@ -169,19 +173,18 @@ class Dir(FSIO):
         if ":" in name or "/" in name or "," in name or "\n" in name or " " in name:
             print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
             return 1
-        allnames = self._ret_ls()
+        allnames = self.ret_ls()
         for i in allnames:
             if i == name:
                 print("That name already exists")
                 return 1
-
-        create_childOutput = self._mk_child_at_context()
         dirID = self._mk_child_at_context()
         lines = self.lines
 
         lines[dirID] = "1:" + name + ":" + str(context) + "\n"
-        # print(self.lines)
+
         self._write_lines(self.lines)
+        print(self.lines)
         return 0
 
     def rmdir(self, name):
@@ -191,7 +194,7 @@ class Dir(FSIO):
         if ":" in name or "/" in name or "," in name or "\n" in name or " " in name:
             print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
             return 1
-        allnames = self._ret_ls()
+        allnames = self.ret_ls()
         nameexists = False
         for i in allnames:
             if i == name:
@@ -229,6 +232,8 @@ class Dir(FSIO):
 
             # delete data at dirID
             lines[dirID - 1] = "\n"
+            print("rmdir check #1:")
+            print(lines)
 
             # remove name's entry from context (aaaaaaaaaa)
             rebuildcontext = ""
@@ -236,8 +241,7 @@ class Dir(FSIO):
             skip = False
             commacount = 0
             n = 0
-            for char in lines[
-                context - 1].strip():  # working_rebuildcontext           #dude. im not even gonna lie. you're gonna have to figure this for block out on your own. it barely works as it is, i don't even wanna waste time documenting it because im 90% sure imma end up needing to change it later anyways
+            for char in lines[context - 1].strip():  # working_rebuildcontext           #dude. im not even gonna lie. you're gonna have to figure this for block out on your own. it barely works as it is, i don't even wanna waste time documenting it because im 90% sure imma end up needing to change it later anyways
                 if working_rebuildcontext == str(dirID) and char == ",":
                     skip = True
                 else:
@@ -320,7 +324,7 @@ class Dir(FSIO):
         return cashpath
 
     def ls(self):  # literally just uses ret_ls() and then outputs to console as one string lol
-        local_ret_ls = self._ret_ls()
+        local_ret_ls = self.ret_ls()
         localls = ""
         for i in local_ret_ls:
             localls = localls + i + " "

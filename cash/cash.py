@@ -71,6 +71,8 @@ def cash():
                             print(locals()[cashcat.split(" ")[2]])
                         else:
                             print("No known variables named \"" + cashcat.split(" ")[2] + "\"")
+                            print(globals())
+                            print(locals())
                 elif cashcat.split(" ")[1] == "test_func()" or cashcat.split(" ")[1] == "test_func":
                     if len(cashcat.split(" ")) > 2:
                         print("print: too many arguments")
