@@ -1,6 +1,9 @@
 # Ignore Mac system files
 .DS_store
+.DS_Store
+/*/.DS_Store
 # Fix the .idea thing
 /.idea
 # Remove __pycache__
 /__pycache__
+/*/__pycache__

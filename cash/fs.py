@@ -37,12 +37,14 @@ class FSIO:
 
     def _read_file(self):
         with open(self.fileName, "r+") as self.file:
+            self.file.seek(0)
             fsLines = self.file.readlines()
             self.file.seek(0)
         return fsLines
 
     def _write_lines(self,lines):  # for any situation needing to write to file, may need to be expanded on to write only specific lines (seek(line), writeline(), seek(0))
-        with open(self.fileName, "r+") as self.file:
+        with open(self.fileName, "w+") as self.file:
+            self.file.seek(0)
             self.file.writelines(lines)
             self.file.seek(0)
         self.lines = self._read_file()
