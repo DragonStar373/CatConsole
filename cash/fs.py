@@ -14,7 +14,7 @@ class FSIO:
     global context
     lines = []
 
-    def __int__(self, fileName):
+    def __init__(self, fileName):
         global context
         self.fileName = fileName
         ensure_exists = open(fileName, "a")
@@ -73,8 +73,7 @@ class FSIO:
         # print(dir_list, " <-dir_list")
         n = 0
         for i in dir_list:
-            dirname = dir_list[n].split(",")[0].split(":")[
-                1]  # for each number in dir_list, go to that line, go to first area before a comma, and go to second area between colons (ie where the name of each child object can be found)
+            dirname = dir_list[n].split(",")[0].split(":")[1]  # for each number in dir_list, go to that line, go to first area before a comma, and go to second area between colons (ie where the name of each child object can be found)
             ls_list.append(dirname)
             n = n + 1
         return ls_list
@@ -164,7 +163,7 @@ class Dir(FSIO):
         return 1
 
     def mkdir(self, name):  # assuming the new dir name is valid and available: locates closest free fs line on population array (if any, otherwise just adds to it), uses that line for new dir, and adds line# to current dir and makes dir at that line
-        self.lines = self._read_file()
+        lines = self._read_file()
 
         # checking that directory can be created
         if ":" in name or "/" in name or "," in name or "\n" in name or " " in name:
@@ -177,10 +176,10 @@ class Dir(FSIO):
                 return 1
 
         create_childOutput = self._mk_child_at_context()
-        self.lines = create_childOutput[0]
-        dirID = create_childOutput[1]
+        dirID = self._mk_child_at_context()
+        lines = self.lines
 
-        self.lines[dirID] = "1:" + name + ":" + str(context) + "\n"
+        lines[dirID] = "1:" + name + ":" + str(context) + "\n"
         # print(self.lines)
         self._write_lines(self.lines)
         return 0
@@ -319,6 +318,14 @@ class Dir(FSIO):
             for i in currentpath[::-1]:  # reverse of array for loop
                 cashpath = cashpath + i
         return cashpath
+
+    def ls(self):  # literally just uses ret_ls() and then outputs to console as one string lol
+        local_ret_ls = self._ret_ls()
+        localls = ""
+        for i in local_ret_ls:
+            localls = localls + i + " "
+        print(localls)
+        return
 
 class File(FSIO):
     global context

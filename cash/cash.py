@@ -10,7 +10,6 @@ fs = FS("testing.txt")
 global context
 # the file object is currently always global, and the fs-lines array will remain local to each individual function. this is so that functions can edit their respective lines array without affecting other functions, as those changes won't take effect until they are truly written to the file
 
-
 def test_func():
     return
 
