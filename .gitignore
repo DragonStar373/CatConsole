@@ -2,3 +2,5 @@
 .DS_store
 # Fix the .idea thing
 /.idea
+# Remove __pycache__
+/__pycache__
