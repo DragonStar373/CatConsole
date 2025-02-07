@@ -13,6 +13,7 @@ from REPEATINGCAT import rcat
 #Setup:
 #   Imports all subprograms, takes variable "fox" as input, and compares it to a list of all commands
 #
+global context
 
 while True:
     fox = input(">:")
