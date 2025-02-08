@@ -47,6 +47,14 @@ def cash():
         elif cashcat == "ls":
             fs.dir.ls()
 
+        elif cashcat.split(" ")[0] == "tap":
+            if len(cashcat.split(" ")) > 2:
+                print("tap: too many arguments")
+            elif len(cashcat.split(" ")) < 2:
+                print("tap: too few arguments")
+            else:
+                fs.file.mkfile(cashcat.split(" ")[1])
+
         elif cashcat.split(" ")[0] == "mkdir":
             if len(cashcat.split(" ")) > 2:
                 print("mkdir: too many arguments")

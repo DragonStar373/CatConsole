@@ -20,20 +20,14 @@ class FSIO:
         ensure_exists = open(fileName, "a")
         ensure_exists.close()
 
-        with open(fileName, "r+") as self.file:
-            fs = self.file
-            fsLines = fs.readlines()
-            fs.seek(0)
-            # print(lines)
-            if len(fsLines) < 2 or (len(fsLines) > 1 and fsLines[1].strip() != "0"):
-                self._init_fs()
-                self.lines = fs.readlines()
-                fs.seek(0)
-                print(fsLines, "!!!!!!")
-            else:
-                self.lines = fs.readlines()
-                fs.seek(0)
-            context = int(fsLines[0])
+        self.lines = self._read_file()
+        # print(lines)
+        if len(self.lines) < 2 or (len(self.lines) > 1 and self.lines[1].strip() != "0"):
+            self._init_fs()
+            self.lines = self._read_file()
+        else:
+            self.lines = self._read_file()
+        context = int(self.lines[0])
 
     def _read_file(self):
         with open(self.fileName, "r+") as self.file:
@@ -49,7 +43,6 @@ class FSIO:
             self.file.seek(0)
         self.lines = self._read_file()
         return 0
-
 
     def _init_fs(self):  # writes default base root fs format, circa revision 0. writes to file, then moves the file's pointer back to start again
         initarray = ["4\n", "0\n", "1111\n", "0:/::\n"]
@@ -106,7 +99,7 @@ class FSIO:
 
         lines[context - 1] = self.lines[context - 1].strip() + "," + str(dirID + 1) + "\n"   #add the child object to current dir
         #lines.append("\n")
-        print("Testing!!! (_mk_child_at_context) lines = " + str(lines))
+        #print("Testing!!! (_mk_child_at_context) lines = " + str(lines))
         self.lines = lines
 
         return dirID
@@ -180,13 +173,12 @@ class Dir(FSIO):
             if i == name:
                 print("That name already exists")
                 return 1
-        dirID = self._mk_child_at_context()
-        lines = self.lines
-
-        lines[dirID] = "1:" + name + ":" + str(context) + "\n"
-
+        dirID = self._mk_child_at_context()     #after this statement, local "lines" variable no longer necessary as the function automatically alters self.lines
+        self.lines[dirID] = "1:" + name + ":" + str(context) + "\n"
         self._write_lines(self.lines)
-        print(self.lines)
+        #print("mkdir (next 2 lines): ")
+        #print(self.lines)
+        #print(lines)
         return 0
 
     def rmdir(self, name):
@@ -234,8 +226,8 @@ class Dir(FSIO):
 
             # delete data at dirID
             lines[dirID - 1] = "\n"
-            print("rmdir check #1:")
-            print(lines)
+            #print("rmdir check #1:")
+            #print(lines)
 
             # remove name's entry from context (aaaaaaaaaa)
             rebuildcontext = ""
@@ -273,7 +265,7 @@ class Dir(FSIO):
                 n = n + 1
                 # print(rebuildcontext, working_rebuildcontext, skip, char)
             lines[context - 1] = rebuildcontext + "\n"  # actually do the thing now
-            print(lines, rebuildcontext)
+            #print(lines, rebuildcontext)
 
             # clear newly freed space from the population array
             n = 0
@@ -283,14 +275,13 @@ class Dir(FSIO):
                     if int(bit) == 1:
                         rebuild_poparray = rebuild_poparray + "0"
                     else:
-                        print(
-                            "How unfortunate. An error has occurred. You should probably go check that")  # lets hope this never happens
+                        print("How unfortunate. An error has occurred. You should probably go check that")  # let's hope this never happens
                         return 1
                 else:
                     rebuild_poparray = rebuild_poparray + bit
                 n = n + 1
             lines[2] = rebuild_poparray + "\n"
-            print(lines)
+            #print(lines)
 
             # write to file.
             self._write_lines(lines)
@@ -401,20 +392,104 @@ class File(FSIO):
                 return 1
         return reconstruction
 
-    def new_file_in_lines(self, name):
-        lines = self._read_file()
+    def _new_file_in_lines(self, name):
+        self.lines = self._read_file()
         dirID = self._mk_child_at_context()
-        self.lines[dirID] = "2:" + str(name) + ":" + str(context) + "::"
+        self.lines[dirID] = "2:" + str(name) + ":" + str(context) + "::" + "\n"
         return self.lines
 
-    def retFileData(self):
-        pass
+    def mkfile(self, name):
+        if ":" in name or "/" in name or "," in name or "\n" in name or " " in name:
+            print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
+            return 1
+
+        allnames = self.ret_ls()
+        for i in allnames:
+            if i == name:
+                print("That name already exists")
+                return 1
+
+        self._write_lines(self._new_file_in_lines(name))
+        return 0
+
+    def _retFileData(self, filename):
+        self.lines = self._read_file()
+        global context
+        contextLs = self.ret_ls()
+        if filename not in contextLs:
+            print("No entry named \"" + filename + "\"")
+            return 1
+
+        preHereItems = self.lines[context - 1].split(",")
+        hereitems = []
+        n = 0
+        for i in preHereItems:
+            if n > 0:
+                hereitems.append(i)
+            n = n + 1
+
+        dirList = []
+        n = 0
+        targetID = 0
+        for i in hereitems:
+            dirList.append(self.lines[int(i) - 1])
+            if self.lines[int(i) - 1].split(",")[0].split(":")[1] == filename:
+                targetID = int(i)
+            # break
+            n = n + 1
+        n = 0
+
+        if targetID == 0:
+            print("There seems to have been a problem. This is deeply unfortunate.")
+            self.lines = self._read_file()
+            return 1
+
+        cont = False
+        targetLines = ""
+        for item in dirList:
+            if item.split(":")[1] == filename.strip():
+                if item.split(":")[0] != "2":
+                    print(filename + ": Not a file")
+                    return 1
+                else:
+                    cont = True
+                    targetLines = item
+
+        n = 0
+        filedata = ""
+        filedatalist = []
+        if cont:
+            for section in targetLines.split(":"):
+                if n > 3:
+                    filedatalist.append(section)
+                if n > 4:
+                    filedatalist.append(":" + section)
+                n = n + 1
+            for section in filedatalist:
+                filedata = filedata + section
+            print("Temp solution: printing filedata string...")
+            print(filedata)
+
+        print("Something went wrong...")
+
 
 
 class FS:
     def __init__(self, fileName):
         self.dir = Dir(fileName)
         self.file = File(fileName)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
