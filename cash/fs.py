@@ -412,6 +412,104 @@ class File(FSIO):
         self._write_lines(self._new_file_in_lines(name))
         return 0
 
+    def rmfile(self, name):
+        lines = self._read_file()
+
+        # checking that directory exists and is valid
+        if ":" in name or "/" in name or "," in name or "\n" in name or " " in name:
+            print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
+            return 1
+        allnames = self.ret_ls()
+        nameexists = False
+        for i in allnames:
+            if i == name:
+                nameexists = True
+        if not nameexists:
+            print("No such name: \"" + name + "\"")
+            return
+
+        # looking for what child object matches the provided name
+        n = 0
+        fileID = 0
+        foundID = False  # contingency, realistically there's no reason we shouldn't find the ID if nameexists == True
+        for i in lines[context - 1].split(","):
+            if n != 0:
+                if lines[int(i) - 1].split(",")[0].split(":")[1] == name:
+                    fileID = int(i)
+                    foundID = True
+            n = n + 1
+
+        # just in case; this SHOULD never happen though, right?? :)
+        if foundID != True:
+            print("An unexpected error has occurred. Please go cry in a corner as necessary.")
+            return 1
+
+        # make sure object is a file
+        if lines[fileID - 1].strip().split(",")[0].split(":")[0] == "1":
+            print("\"" + name + "\": is a directory")
+            return 1
+        elif lines[fileID - 1].strip().split(",")[0].split(":")[0] != "2":
+            print("\"" + name + "\": item of unkown type")
+            return 1
+
+        # delete data at fileID
+        lines[fileID - 1] = "\n"
+
+        # remove name's entry from context (aaaaaaaaaa)
+        rebuildcontext = ""
+        working_rebuildcontext = ""
+        commacount = 0
+        n = 0
+        for char in lines[context - 1].strip():  # working_rebuildcontext           #dude. im not even gonna lie. you're gonna have to figure this for block out on your own. it barely works as it is, i don't even wanna waste time documenting it because im 90% sure imma end up needing to change it later anyways
+            if working_rebuildcontext == str(fileID) and char == ",":
+                skip = True
+            else:
+                skip = False
+            if char == "," and skip == False:
+                if commacount == 0:
+                    rebuildcontext = rebuildcontext + working_rebuildcontext
+                    working_rebuildcontext = ""
+                    commacount = commacount + 1
+                else:
+                    rebuildcontext = rebuildcontext + "," + working_rebuildcontext
+                    working_rebuildcontext = ""
+                    commacount = commacount + 1
+            elif char == "," and skip == True:
+                working_rebuildcontext = ""
+                skip = False
+            elif char != "," and skip == False:
+                working_rebuildcontext = working_rebuildcontext + char
+            else:
+                print("Uh Oh! The thing that wasn't supposed to happen just happened!")
+                return 1
+
+            if len(lines[context - 1].strip()) == n + 1 and working_rebuildcontext != str(fileID):
+                rebuildcontext = rebuildcontext + "," + working_rebuildcontext
+                working_rebuildcontext = ""
+            n = n + 1
+            #print(rebuildcontext, working_rebuildcontext, skip, char)
+        lines[context - 1] = rebuildcontext + "\n"  # actually do the thing now
+
+        # clear newly freed space from the population array
+        n = 0
+        rebuild_poparray = ""
+        for bit in lines[2].strip():
+            if n == (fileID - 1):
+                if int(bit) == 1:
+                    rebuild_poparray = rebuild_poparray + "0"
+                else:
+                    print(
+                        "How unfortunate. An error has occurred. You should probably go check that")  # let's hope this never happens
+                    return 1
+            else:
+                rebuild_poparray = rebuild_poparray + bit
+            n = n + 1
+        lines[2] = rebuild_poparray + "\n"
+
+        # write to file.
+        self._write_lines(lines)
+
+
     def _retFileData(self, filename):
         self.lines = self._read_file()
         global context
