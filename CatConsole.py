@@ -1,3 +1,4 @@
+import sys
 import time
 from cash import cash
 from carmode import carmode
@@ -14,6 +15,10 @@ from REPEATINGCAT import rcat
 #   Imports all subprograms, takes variable "fox" as input, and compares it to a list of all commands
 #
 global context
+
+cash()
+print("Goodbye")
+sys.exit()
 
 while True:
     fox = input(">:")

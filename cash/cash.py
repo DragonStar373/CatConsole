@@ -7,6 +7,23 @@ fs = FS("testing.txt")
 #   all the functions at the top, then cash function which opens the virt-fs, starts the main loop and refreshes the fs every loop
 #   otherwise, the cash function works very similarly to the main catconsole program. will likely replace CatConsole's default cl
 
+
+progs = {
+    "quit": [lambda: fs.dir.cd, 0, ""],
+    "cc": [lambda: fs.dir.cd, 0, ""],
+    "help": [lambda: fs.dir.cd, 0, ""],
+    "cd": [lambda: fs.dir.cd, 1, ""],
+    "ls": [lambda: fs.dir.ls, 0, ""],
+    "mkdir": [lambda: fs.dir.mkdir, 1, ""],
+    "rmdir": [lambda: fs.dir.rmdir, 1, ""],
+    "carmode": [lambda: fs.dir.cd, 0, ""],
+    "car": [lambda: fs.dir.cd, 0, ""],
+    "nyan": [lambda: fs.dir.cd, 0, ""],
+    "rcat": [lambda: fs.dir.cd, 0, ""],
+    "repeatingcat": [lambda: fs.dir.cd, 0, ""],
+    "maze": [lambda: fs.dir.cd, 0, ""]
+}
+
 global context
 # the file object is currently always global, and the fs-lines array will remain local to each individual function. this is so that functions can edit their respective lines array without affecting other functions, as those changes won't take effect until they are truly written to the file
 
@@ -21,6 +38,11 @@ def cash():
         #print(cashpath)
         #main loop
         cashcat = input(""+ cashpath + " >$")
+
+        if cashcat.lower().split(" ")[0] in progs:
+            if (len(cashcat.lower().split(" ")) - 1) > progs[cashcat.lower().split(" ")[0]][1]:
+                print("T")
+
         if cashcat == "quit":
             sys.exit()
         elif cashcat == "cc":
