@@ -1,0 +1,1 @@
+from .mazik import mazik

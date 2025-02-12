@@ -1,5 +1,5 @@
 #HAPPY BIRTHDAY ODDWIN
-from .maze_tools import *
+from maze_tools import *
 size = int(input("give size: "))
 
 #only here so i can use N and "N" interchangebly, didnt rlly use

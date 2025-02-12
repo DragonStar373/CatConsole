@@ -1,4 +1,4 @@
-from maze_tools import *
+from maze_tools import make_maze, cell_find, animate_maze_and_path
 
 size = int(input("give size"))
 N = "N"

@@ -56,5 +56,6 @@ while True:
                     n = n + 1
                 execcommand = execcommand + ")"
                 exec(execcommand)
-        
+        else:
+            print(cashret.lower().split(" ")[0] +": No such command")
 print("Goodbye")
