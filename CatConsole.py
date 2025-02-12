@@ -1,9 +1,15 @@
 import sys
 import time
-from cash import cash
+from cash import cash, help_func
 from carmode import carmode
 from REPEATINGCAT import rcat
-#from maze.mazik import mazik
+from nyan import nyanfunction
+global mazeImported
+try:
+    from maze.mazik import mazik
+    mazeImported = True
+except ImportError:
+    mazeImported = False
 #at some point there will be a custom beginning file that the user can permanantly change, requires changing and reading text files
 
 #opener = "consoleopener.txt"
@@ -16,35 +22,39 @@ from REPEATINGCAT import rcat
 #
 global context
 
-cash()
-print("Goodbye")
-sys.exit()
+builtin = {
+    "carmode": [lambda: carmode(), 0, ""],
+    "car": [lambda: carmode(), 0, ""],
+    "nyan": [lambda: nyanfunction(), 0, ""],
+    "rcat": [lambda: rcat(), 0, ""],
+    "repeatingcat": [lambda: rcat(), 0, ""],
+    "help": [lambda: help_func(builtin), 0, ""]
+}
+if mazeImported:
+    builtin["maze"] = [lambda: mazik(), 0, ""]
 
 while True:
-    fox = input(">:")
-    if fox == "quit":
-        break
-    elif fox == "help":
-        print("Public Commands:\n  help\n  cash\n  maze\n  nyan\n  rcat\n  car\n  quit")
-    elif fox == "cash":
-        cash()
-    elif fox == "car":
-        carmode()
-    elif fox == "nyan":
-        from nyan import nyanfunction
-        nyanfunction()
-    elif fox == "maze":
-        from mazik.mazik import mazik
-        print("make sure you run catconsole with 'python catconsole.py'")
-        mazik()
-    elif fox.lower() == "rcat" or fox.lower() == "repeatingcat":
-        rcat()
-    elif fox == "":
-        pass
-    #elif fox.lower() == "motd":        tbd, might remove for permanent
-    #    with open("consoleopener.txt", "r+") as f:
-    #        f.write(input("  >:"))
-    else:
-        print('"' + fox + '" is not a recognised command')
+    cashret = cash()
+    if cashret != 0:
+        if cashret.lower().split(" ")[0] in builtin:
+            if (len(cashret.lower().split(" ")) - 1) > builtin[cashret.lower().split(" ")[0]][1]:
+                print(str(cashret.lower().split(" ")[0]) + ": Too many arguments")
+            elif (len(cashret.lower().split(" ")) - 1) < builtin[cashret.lower().split(" ")[0]][1]:
+                print(str(cashret.lower().split(" ")[0]) + ": Too few arguments")
+            else:
+                commandargs = []
+                execcommand = "builtin[cashret.lower().split(" ")[0]][0]("
+                n = 0
+                for i in range(1, len(cashret.lower().split(
+                        " "))):  # no need for the -1, because we need that extra number anyways
+                    commandargs.append(cashret.lower().split(" ")[i])
+                for arg in commandargs:
+                    if n == 0:
+                        execcommand = execcommand + "\"" + arg + "\""
+                    else:
+                        execcommand = execcommand + ", " + "\"" + arg + "\""
+                    n = n + 1
+                execcommand = execcommand + ")"
+                exec(execcommand)
         
 print("Goodbye")

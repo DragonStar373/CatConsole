@@ -7,21 +7,20 @@ fs = FS("testing.txt")
 #   all the functions at the top, then cash function which opens the virt-fs, starts the main loop and refreshes the fs every loop
 #   otherwise, the cash function works very similarly to the main catconsole program. will likely replace CatConsole's default cl
 
+def help_func(dct):
+    for name in dct.keys():
+        print(" " + name)
+    return 0
 
 progs = {
-    "quit": [lambda: fs.dir.cd, 0, ""],
-    "cc": [lambda: fs.dir.cd, 0, ""],
-    "help": [lambda: fs.dir.cd, 0, ""],
-    "cd": [lambda: fs.dir.cd, 1, ""],
-    "ls": [lambda: fs.dir.ls, 0, ""],
-    "mkdir": [lambda: fs.dir.mkdir, 1, ""],
-    "rmdir": [lambda: fs.dir.rmdir, 1, ""],
-    "carmode": [lambda: fs.dir.cd, 0, ""],
-    "car": [lambda: fs.dir.cd, 0, ""],
-    "nyan": [lambda: fs.dir.cd, 0, ""],
-    "rcat": [lambda: fs.dir.cd, 0, ""],
-    "repeatingcat": [lambda: fs.dir.cd, 0, ""],
-    "maze": [lambda: fs.dir.cd, 0, ""]
+    "quit": [lambda: sys.exit(), 0, ""],
+    "cc": [lambda: exec("break"), 0, ""],
+    "help": [lambda: help_func(progs), 0, ""],
+    "cd": [lambda arg: fs.dir.cd(arg), 1, ""],
+    "ls": [lambda: fs.dir.ls(), 0, ""],
+    "mkdir": [lambda arg: fs.dir.mkdir(arg), 1, ""],
+    "rmdir": [lambda arg: fs.dir.rmdir(arg), 1, ""],
+    "testfunc": [lambda: test_func(), 0, ""]
 }
 
 global context
@@ -32,109 +31,40 @@ def test_func():
 
 def cash():
     global context
-    while True:
-        #check if root, start building current path
-        cashpath = fs.dir.trace_path()
-        #print(cashpath)
-        #main loop
-        cashcat = input(""+ cashpath + " >$")
+    #check if root, start building current path
+    cashpath = fs.dir.trace_path()
 
-        if cashcat.lower().split(" ")[0] in progs:
-            if (len(cashcat.lower().split(" ")) - 1) > progs[cashcat.lower().split(" ")[0]][1]:
-                print("T")
+    cashcat = input("" + cashpath + " >$")
 
-        if cashcat == "quit":
-            sys.exit()
-        elif cashcat == "cc":
-            break
-        elif cashcat == "help":
-            print("Cash Commands:\n  cd {dir}\n  ls\n  mkdir {name}\nPublic Commands:\n  help\n  cc\n  maze\n  nyan\n  rcat\n  car\n  quit")
-
-        elif cashcat.split(" ")[0] == "rmdir":
-            if len(cashcat.split(" ")) > 2:
-                print("rmdir: too many arguments")
-            elif len(cashcat.split(" ")) < 2:
-                print("rmdir: too few arguments")
-            else:
-                fs.dir.rmdir(cashcat.split(" ")[1])
-
-        elif cashcat.split(" ")[0] == "cd":
-            if len(cashcat.split(" ")) > 2:
-                print("cd: too many arguments")
-            elif len(cashcat.split(" ")) < 2:
-                print("cd: too few arguments")
-            else:
-                fs.dir.cd(cashcat.split(" ")[1])
-
-        elif cashcat == "ls":
-            fs.dir.ls()
-
-        elif cashcat.split(" ")[0] == "tap":
-            if len(cashcat.split(" ")) > 2:
-                print("tap: too many arguments")
-            elif len(cashcat.split(" ")) < 2:
-                print("tap: too few arguments")
-            else:
-                fs.file.mkfile(cashcat.split(" ")[1])
-
-        elif cashcat.split(" ")[0] == "mkdir":
-            if len(cashcat.split(" ")) > 2:
-                print("mkdir: too many arguments")
-            elif len(cashcat.split(" ")) < 2:
-                print("mkdir: too few arguments")
-            else:
-                fs.dir.mkdir(cashcat.split(" ")[1])
-
-        elif cashcat.split(" ")[0] == "python" or cashcat.split(" ")[0] == "py" or cashcat.split(" ")[0] == "python3":
-            if len(cashcat.split(" ")) < 2:
-                print(cashcat.split(" ")[0] +": too few arguments")
-            else:
-                if cashcat.split(" ")[1] == "print":
-                    if len(cashcat.split(" ")) < 3:
-                        print("print: too few arguments")
-                    elif len(cashcat.split(" ")) > 3:
-                        print("print: too many arguments")
-                    else:
-                        if cashcat.split(" ")[2] in globals():
-                            print(globals()[cashcat.split(" ")[2]])
-                        elif cashcat.split(" ")[2] in locals():
-                            print(locals()[cashcat.split(" ")[2]])
-                        else:
-                            print("No known variables named \"" + cashcat.split(" ")[2] + "\"")
-                            print(globals())
-                            print(locals())
-                elif cashcat.split(" ")[1] == "test_func()" or cashcat.split(" ")[1] == "test_func":
-                    if len(cashcat.split(" ")) > 2:
-                        print("print: too many arguments")
-                    else:
-                        test_funcExitCode = test_func()
-                        print("Returned with \"" + str(test_funcExitCode) + "\"")
-                else:
-                    print("\"" + cashcat.split(" ")[1] + "\" is not a recognized command, or more likely has not been integrated")
-
-        elif cashcat == "car":
-            #carmode()
-            pass
-        elif cashcat == "cash":
-            cash()
-        elif cashcat == "nyan":
-            pass
-            #from nyan import nyanfunction
-            #nyanfunction()
-        elif cashcat == "maze":
-            #from mazik.mazik import mazik
-            print("make sure you run catconsole with 'python catconsole.py'")
-            #mazik()
-        elif cashcat.lower() == "rcat" or cashcat.lower() == "repeatingcat":
-            #rcat()
-            pass
-        elif cashcat == "":
-            pass
-        elif cashcat.lower() == "motd":
-            with open("../consoleopener.txt", "r+") as f:
-                f.write(input("  >:"))
+    if cashcat.lower().split(" ")[0] in progs:
+        if (len(cashcat.lower().split(" ")) - 1) > progs[cashcat.lower().split(" ")[0]][1]:
+            print(str(cashcat.lower().split(" ")[0]) + ": Too many arguments")
+            return 1
+        elif (len(cashcat.lower().split(" ")) - 1) < progs[cashcat.lower().split(" ")[0]][1]:
+            print(str(cashcat.lower().split(" ")[0]) + ": Too few arguments")
+            return 1
         else:
-            print('"' + cashcat + '" is not a recognised command')
+            commandargs = []
+            execcommand = "progs[cashcat.lower().split(" ")[0]][0]("
+            n = 0
+            for i in range(1, len(cashcat.lower().split(" "))):     #no need for the -1, because we need that extra number anyways
+                commandargs.append(cashcat.lower().split(" ")[i])
+            for arg in commandargs:
+                if n == 0:
+                    execcommand = execcommand + "\"" + arg + "\""
+                else:
+                    execcommand = execcommand + ", " + "\"" + arg + "\""
+                n = n + 1
+            execcommand = execcommand + ")"
+            #print(execcommand)
+            exec(execcommand)
+
+            if cashcat.lower().split(" ")[0] == "help":
+                return cashcat.lower().split(" ")[0]
+            return 0
+    else:
+        return cashcat
+
 
 
 

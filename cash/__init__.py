@@ -1,3 +1,2 @@
-from .fs import FS, Dir, File, FSIO
-from .cash import cash
+from .cash import cash, help_func
 
