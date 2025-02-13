@@ -331,14 +331,14 @@ class File(FSIO):
         global context
         self.lines = self._read_file()
 
-    def check_if_file(self):
+    def check_if_file(self, fileID):
         lines = self._read_file()
-        if lines[context - 1].split(",")[0].split(":")[0] == "2":
+        if lines[fileID - 1].split(",")[0].split(":")[0] == "2":
             return True
         else:
             return False
 
-    def encode_data(self, string):
+    def _encode_data(self, string):
         reconstruction = ""
         for letter in string:
             if letter == "\\":
@@ -351,7 +351,7 @@ class File(FSIO):
                 reconstruction = reconstruction + letter
         return reconstruction
 
-    def decode_data(self, string):
+    def _decode_data(self, string):
         reconstruction = ""
         last2letters = []
         letterCount = 0
@@ -509,8 +509,45 @@ class File(FSIO):
         # write to file.
         self._write_lines(lines)
 
+    def _write_file_data(self, data, fileID):
+        lines = self._read_file()
 
-    def _retFileData(self, filename):
+        #checking that fileID is what it says it is
+        if not self.check_if_file(fileID):
+            print("Error: given object not a file")
+            return 1
+        if len(lines[fileID - 1].split(":")) < 5:
+            print("Error: incorrectly formatted or possibly corrupt file..?")
+            return 1
+
+        #encoding the data depending on the provided data's type, appending it to the appropriate line,
+        encodedData = ""
+        if isinstance(data, str):
+            encodedData = encodedData + self._encode_data(data)
+        elif isinstance(data, list):
+            for section in data:
+                encodedData = encodedData + self._encode_data(section)
+        else:
+            print("it would interest you to know that you passed an impossible datatype to a function. data being typecast to string;")
+            data = str(data)
+            encodedData = encodedData + self._encode_data(data)
+        #get just the object stub from the line
+        fileStub = ""
+        n = 0
+        for section in lines[fileID - 1].strip():
+            if n == 4:
+                break
+            fileStub = fileStub + section + ":"
+            n = n + 1
+
+
+
+
+
+
+
+
+    def _ret_file_data(self, filename):
         self.lines = self._read_file()
         global context
         contextLs = self.ret_ls()
@@ -518,57 +555,49 @@ class File(FSIO):
             print("No entry named \"" + filename + "\"")
             return 1
 
+        #find the id of the target file, make sure target object is in fact a file
         preHereItems = self.lines[context - 1].split(",")
-        hereitems = []
+        hereitems = []      #to contain an array of all the child objects in the current directory
         n = 0
         for i in preHereItems:
             if n > 0:
                 hereitems.append(i)
             n = n + 1
-
-        dirList = []
+        targetLines = ""
         n = 0
         targetID = 0
         for i in hereitems:
-            dirList.append(self.lines[int(i) - 1])
+            targetLines = targetLines + self.lines[int(i) - 1]
             if self.lines[int(i) - 1].split(",")[0].split(":")[1] == filename:
                 targetID = int(i)
             # break
             n = n + 1
-        n = 0
-
+        #error handling; should never occur, since if the name is on the _ret_ls list it should in fact be there
         if targetID == 0:
             print("There seems to have been a problem. This is deeply unfortunate.")
             self.lines = self._read_file()
             return 1
+        if not self.check_if_file(targetID):
+            print(filename + ": Not a file or unknown type")
+            return 1
 
-        cont = False
-        targetLines = ""
-        for item in dirList:
-            if item.split(":")[1] == filename.strip():
-                if item.split(":")[0] != "2":
-                    print(filename + ": Not a file")
-                    return 1
-                else:
-                    cont = True
-                    targetLines = item
-
+        #fetch the file data, (not done yet ->) decode it, then return it
         n = 0
         filedata = ""
         filedatalist = []
-        if cont:
-            for section in targetLines.split(":"):
-                if n > 3:
-                    filedatalist.append(section)
-                if n > 4:
-                    filedatalist.append(":" + section)
-                n = n + 1
-            for section in filedatalist:
-                filedata = filedata + section
-            print("Temp solution: printing filedata string...")
-            print(filedata)
+        for section in targetLines.split(":"):
+            if n > 3:                               #remember n starts at zero
+                filedatalist.append(section)
+            if n > 4:
+                filedatalist.append(":" + section)
+            n = n + 1
+        for section in filedatalist:
+            filedata = filedata + section
+        decoded = self._decode_data(filedata)
+        return decoded
 
-        print("Something went wrong...")
+
+
 
 
 

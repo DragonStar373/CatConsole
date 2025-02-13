@@ -35,8 +35,8 @@ if mazeImported:
 
 while True:
     cashret = cash()
-    if cashret != 0:
-        if cashret.lower().split(" ")[0] in builtin:
+    if isinstance(cashret, str):
+        if str(cashret).lower().split(" ")[0] in builtin:
             if (len(cashret.lower().split(" ")) - 1) > builtin[cashret.lower().split(" ")[0]][1]:
                 print(str(cashret.lower().split(" ")[0]) + ": Too many arguments")
             elif (len(cashret.lower().split(" ")) - 1) < builtin[cashret.lower().split(" ")[0]][1]:
@@ -57,5 +57,5 @@ while True:
                 execcommand = execcommand + ")"
                 exec(execcommand)
         else:
-            print(cashret.lower().split(" ")[0] +": No such command")
+            print(str(cashret).lower().split(" ")[0] +": No such command")
 print("Goodbye")
