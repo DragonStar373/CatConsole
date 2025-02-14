@@ -520,7 +520,7 @@ class File(FSIO):
             print("Error: incorrectly formatted or possibly corrupt file..?")
             return 1
 
-        #encoding the data depending on the provided data's type, appending it to the appropriate line,
+        #encoding the data depending on the provided data's type, appending it to the stub, writing it to lines, and writing lines,
         encodedData = ""
         if isinstance(data, str):
             encodedData = encodedData + self._encode_data(data)
@@ -534,18 +534,72 @@ class File(FSIO):
         #get just the object stub from the line
         fileStub = ""
         n = 0
-        for section in lines[fileID - 1].strip():
+        for section in lines[fileID - 1].strip().split(":"):
             if n == 4:
                 break
             fileStub = fileStub + section + ":"
             n = n + 1
+        result = fileStub + encodedData + "\n"
+        lines[fileID -1] = result
+        self._write_lines(lines)
+        return 0
 
+    def edit_file(self, name):
+        lines = self._read_file()
 
+        # checking that directory exists and is valid
+        if ":" in name or "/" in name or "," in name or "\n" in name or " " in name:
+            print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
+            return 1
+        allnames = self.ret_ls()
+        nameexists = False
+        for i in allnames:
+            if i == name:
+                nameexists = True
+        if not nameexists:
+            print("No such name: \"" + name + "\"")
+            return
 
+        # looking for what child object matches the provided name
+        n = 0
+        fileID = 0
+        foundID = False  # contingency, realistically there's no reason we shouldn't find the ID if nameexists == True
+        for i in lines[context - 1].split(","):
+            if n != 0:
+                if lines[int(i) - 1].split(",")[0].split(":")[1] == name:
+                    fileID = int(i)
+                    foundID = True
+            n = n + 1
 
+        # just in case; this SHOULD never happen though, right?? :)
+        if not foundID:
+            print("An unexpected error has occurred. Please go cry in a corner as necessary.")
+            return 1
 
+        # make sure object is a file
+        if lines[fileID - 1].strip().split(",")[0].split(":")[0] == "1":
+            print("\"" + name + "\": is a directory")
+            return 1
+        elif lines[fileID - 1].strip().split(",")[0].split(":")[0] != "2":
+            print("\"" + name + "\": item of unkown type")
+            return 1
 
-
+        #prompting user for data to write
+        print("Enter desired data to be written.\nAfter entering data, type \"QQ\" to quit and write to file, or type \"QQ\" now to leave file untouched")
+        data = ""
+        n = 0
+        userEndedSession = False
+        while not userEndedSession:
+            prompt = input().strip()
+            if prompt == "QQ":
+                if n > 0:
+                    userEndedSession = True
+                else:
+                    return 0
+            else:
+                data = data + prompt + "\n"
+            n = n + 1
+        self._write_file_data(data, fileID)
 
     def _ret_file_data(self, filename):
         self.lines = self._read_file()
@@ -581,11 +635,11 @@ class File(FSIO):
             print(filename + ": Not a file or unknown type")
             return 1
 
-        #fetch the file data, (not done yet ->) decode it, then return it
+        #fetch the file data, decode it, then return it
         n = 0
         filedata = ""
         filedatalist = []
-        for section in targetLines.split(":"):
+        for section in self.lines[targetID - 1].split(":"):
             if n > 3:                               #remember n starts at zero
                 filedatalist.append(section)
             if n > 4:

@@ -24,7 +24,8 @@ progs = {                   #structure= key:[function, argument count, help stri
     "rm": [lambda arg: fs.file.rmfile(arg), 1, ""],
     "del": [lambda arg: fs.file.rmfile(arg), 1, ""],
     "touch": [lambda arg: fs.file.mkfile(arg), 1, ""],
-    "retfd": [lambda  arg: fs.file._ret_file_data(arg), 1, ""]
+    "retfd": [lambda  arg: fs.file._ret_file_data(arg), 1, ""],
+    "edit": [lambda arg: fs.file.edit_file(arg), 1, ""]
 }
 
 global context
