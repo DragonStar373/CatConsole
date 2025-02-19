@@ -51,7 +51,7 @@ class FSIO:
         print(self.lines, "!!!!!!")
         return
 
-    def _ret_ls(self):  # returns an array of all the names of the child objects of context
+    def ret_ls(self):  # returns an array of all the names of the child objects of context
         lines = self._read_file()
         here = lines[context - 1]  # basically equal to the line of the fs we're currently in
         hereitems = here.split(",")  # array of all the individual components of the current directory
@@ -73,24 +73,27 @@ class FSIO:
             n = n + 1
         return ls_list
 
-    def _ret_objectID(self, name):
+    def ret_objectID(self, name):
         lines = self.lines
 
-        if name not in self._ret_ls():
+        if name not in self.ret_ls():
             print("\"" + name + "\" not found")
             return 1
+
+        print(lines[context - 1].split(","))
 
         # looking for what child object matches the provided name
         n = 0
         objectID = 0
         foundID = False  # contingency, realistically there's no reason we shouldn't find the ID if nameexists == True
         while not foundID:
-            if n > len(lines[context - 1].split(",")):
-                break
-            if lines[context - 1].split(",")[n].strip() == name:
-                foundID = True
-                objectID = n
-                break
+            if n > 0:
+                if n >= len(lines[context - 1].split(",")):
+                    break
+                if lines[int(lines[context - 1].split(",")[n].strip()) - 1].split(":")[1] == name:
+                    foundID = True
+                    objectID = n
+                    break
             n += 1
 
         # just in case; this SHOULD never happen though, right?? :)
@@ -99,6 +102,18 @@ class FSIO:
             return 1
 
         return objectID
+
+    def ret_object_type(self, objectID):
+        lines = self._read_file()
+        if self._ensure_exists(objectID):
+            return lines[objectID - 1].strip().split(":")[0]
+        else:
+            print("Item does not exist or has no data")
+            return False
+
+    def ret_object_type_by_name(self, name):
+        objectID = self.ret_objectID(name)
+        return self.ret_object_type(objectID)
 
     def _mk_child_at_context(self):      #modifies self.lines, returns dirID of child object
         # looking for closest space available to write/overwrite new directory, modifying population array as appropriate
@@ -149,7 +164,7 @@ class Dir(FSIO):
         super().__init__(fileName)
         self.lines = self._read_file()
 
-    def _check_if_dir(self, dirID):
+    def check_if_dir(self, dirID):
         lines = self._read_file()
         if not self._ensure_exists(dirID):
             return False
@@ -175,7 +190,7 @@ class Dir(FSIO):
                 return 0
 
         # make sure the target directory exists
-        herels = self._ret_ls()
+        herels = self.ret_ls()
         if name not in herels:
             print("No directory named \"" + name + "\"")
             return 1
@@ -214,7 +229,7 @@ class Dir(FSIO):
         if ":" in name or "/" in name or "," in name or "\n" in name or " " in name:
             print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
             return 1
-        allnames = self._ret_ls()
+        allnames = self.ret_ls()
         for i in allnames:
             if i == name:
                 print("That name already exists")
@@ -234,7 +249,7 @@ class Dir(FSIO):
         if ":" in name or "/" in name or "," in name or "\n" in name or " " in name:
             print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
             return 1
-        if name not in self._ret_ls():
+        if name not in self.ret_ls():
             print("No such name: \"" + name + "\"")
             return 1
 
@@ -349,13 +364,7 @@ class Dir(FSIO):
                 cashpath = cashpath + i
         return cashpath
 
-    def ls(self):  # literally just uses ret_ls() and then outputs to console as one string lol
-        local_ret_ls = self._ret_ls()
-        localls = ""
-        for i in local_ret_ls:
-            localls = localls + i + " "
-        print(localls)
-        return
+
 
 class File(FSIO):
     global context
@@ -421,7 +430,7 @@ class File(FSIO):
             print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
             return 1
 
-        allnames = self._ret_ls()
+        allnames = self.ret_ls()
         for i in allnames:
             if i == name:
                 print("That name already exists")
@@ -437,7 +446,7 @@ class File(FSIO):
         if ":" in name or "/" in name or "," in name or "\n" in name or " " in name:
             print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
             return 1
-        allnames = self._ret_ls()
+        allnames = self.ret_ls()
         nameexists = False
         for i in allnames:
             if i == name:
@@ -565,7 +574,7 @@ class File(FSIO):
     def write_file_data_from_name(self, data, filename):
         lines = self._read_file()
         global context
-        contextLs = self._ret_ls()
+        contextLs = self.ret_ls()
         if filename not in contextLs:
             print("No entry named \"" + filename + "\"")
             return 1
@@ -628,10 +637,10 @@ class File(FSIO):
         if ":" in name or "/" in name or "," in name or "\n" in name or " " in name:
             print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
             return 1
-        if name not in self._ret_ls():
+        if name not in self.ret_ls():
             print("No such name: \"" + name + "\"")
             return 1
-        if not self._check_if_file(self._ret_objectID(name)):
+        if not self._check_if_file(self.ret_objectID(name)):
             print(name + ": Not a file")
             return 1
 
@@ -655,7 +664,7 @@ class File(FSIO):
     def ret_file_data_from_name(self, filename):
         self.lines = self._read_file()
         global context
-        contextLs = self._ret_ls()
+        contextLs = self.ret_ls()
         if filename not in contextLs:
             print("No entry named \"" + filename + "\"")
             return 1
