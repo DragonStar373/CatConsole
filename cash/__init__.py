@@ -1,2 +1,3 @@
-from .cash import cash, help_func
+from .cash import cash
+from .programs import help_func
 

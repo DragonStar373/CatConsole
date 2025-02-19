@@ -106,12 +106,31 @@ class FSIO:
 
     def ret_ls_dirIDs(self):
         pass #maybe returns a dict? array? idk
+
+    def _ensure_exists(self, objectID):
+        lines = self._read_file()
+        # make sure it exists
+        if int(objectID) > len(lines):
+            return False
+        elif lines[objectID - 1] == "\n" or lines[objectID - 1] == "":
+            return False
+        return True
     
 class Dir(FSIO):
     global context
     def __init__(self, fileName):
         super().__init__(fileName)
         self.lines = self._read_file()
+
+    def _check_if_dir(self, dirID):
+        lines = self._read_file()
+        if not self._ensure_exists(dirID):
+            return False
+        # make sure it's a file
+        if lines[dirID - 1].split(",")[0].split(":")[0] == "1":
+            return True
+        else:
+            return False
 
     def cd(self, name):  #
         global context
@@ -188,109 +207,96 @@ class Dir(FSIO):
         if ":" in name or "/" in name or "," in name or "\n" in name or " " in name:
             print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
             return 1
-        allnames = self.ret_ls()
-        nameexists = False
-        for i in allnames:
-            if i == name:
-                nameexists = True
-        if nameexists:
+        if name not in self.ret_ls():
+            print("No such name: \"" + name + "\"")
+            return 1
 
-            # checking context subdir by subdir to find which one matches name
+        # checking context subdir by subdir to find which one matches name
+        n = 0
+        dirID = 0
+        foundID = False  # contingency, realistically there's no reason we shouldn't find the ID if nameexists == True
+        for i in lines[context - 1].split(","):
+            if n != 0:
+                if lines[int(i) - 1].split(",")[0].split(":")[1] == name:
+                    dirID = int(i)
+                    foundID = True
+            n = n + 1
+
+        # just in case; this SHOULD never happen though, right?? :)
+        if foundID != True:
+            print("An unexpected error has occurred. Please go cry in a corner as necessary.")
+            return 1
+
+        # make sure object is a directory, and that it has no child directories of its own
+
+        if lines[dirID - 1].strip().split(",")[0].split(":")[0] == "1":
             n = 0
-            dirID = 0
-            foundID = False  # contingency, realistically there's no reason we shouldn't find the ID if nameexists == True
-            for i in lines[context - 1].split(","):
-                if n != 0:
-                    if lines[int(i) - 1].split(",")[0].split(":")[1] == name:
-                        dirID = int(i)
-                        foundID = True
+            for i in lines[dirID - 1].strip().split(","):
                 n = n + 1
-
-            # just in case; this SHOULD never happen though, right?? :)
-            if foundID != True:
-                print("An unexpected error has occurred. Please go cry in a corner as necessary.")
+            if n > 1:
+                print("Error: \"" + name + "\" is not empty.")
                 return 1
+        else:
+            print("\"" + name + "\": not a directory")
+            return 1
 
-            # make sure object is a directory, and that it has no child directories of its own
+        # delete data at dirID
+        lines[dirID - 1] = "\n"
 
-            if lines[dirID - 1].strip().split(",")[0].split(":")[0] == "1":
-                n = 0
-                for i in lines[dirID - 1].strip().split(","):
-                    n = n + 1
-                if n > 1:
-                    print("Error: \"" + name + "\" is not empty.")
-                    return 1
+        # remove target directory's entry from context (aaaaaaaaaa)
+        rebuildcontext = ""
+        working_rebuildcontext = ""
+        skip = False
+        commacount = 0
+        n = 0
+        for char in lines[context - 1].strip():  # working_rebuildcontext           #dude. im not even gonna lie. you're gonna have to figure this for block out on your own. it barely works as it is, i don't even wanna waste time documenting it because im 90% sure imma end up needing to change it later anyways
+            if working_rebuildcontext == str(dirID) and char == ",":
+                skip = True
             else:
-                print("\"" + name + "\": not a directory")
-                return 1
-
-            # delete data at dirID
-            lines[dirID - 1] = "\n"
-            #print("rmdir check #1:")
-            #print(lines)
-
-            # remove name's entry from context (aaaaaaaaaa)
-            rebuildcontext = ""
-            working_rebuildcontext = ""
-            skip = False
-            commacount = 0
-            n = 0
-            for char in lines[context - 1].strip():  # working_rebuildcontext           #dude. im not even gonna lie. you're gonna have to figure this for block out on your own. it barely works as it is, i don't even wanna waste time documenting it because im 90% sure imma end up needing to change it later anyways
-                if working_rebuildcontext == str(dirID) and char == ",":
-                    skip = True
-                else:
-                    skip = False
-
-                if char == "," and skip == False:
-                    if commacount == 0:
-                        rebuildcontext = rebuildcontext + working_rebuildcontext
-                        working_rebuildcontext = ""
-                        commacount = commacount + 1
-                    else:
-                        rebuildcontext = rebuildcontext + "," + working_rebuildcontext
-                        working_rebuildcontext = ""
-                        commacount = commacount + 1
-                elif char == "," and skip == True:
+                skip = False
+            if char == "," and skip == False:
+                if commacount == 0:
+                    rebuildcontext = rebuildcontext + working_rebuildcontext
                     working_rebuildcontext = ""
-                    skip = False
-                elif char != "," and skip == False:
-                    working_rebuildcontext = working_rebuildcontext + char
+                    commacount = commacount + 1
                 else:
-                    print("Uh Oh! The thing that wasn't supposed to happen just happened!")
-                    return 1
-
-                if len(lines[context - 1].strip()) == n + 1 and working_rebuildcontext != str(dirID):
                     rebuildcontext = rebuildcontext + "," + working_rebuildcontext
                     working_rebuildcontext = ""
-                n = n + 1
-                # print(rebuildcontext, working_rebuildcontext, skip, char)
-            lines[context - 1] = rebuildcontext + "\n"  # actually do the thing now
-            #print(lines, rebuildcontext)
+                    commacount = commacount + 1
+            elif char == "," and skip == True:
+                working_rebuildcontext = ""
+                skip = False
+            elif char != "," and skip == False:
+                working_rebuildcontext = working_rebuildcontext + char
+            else:
+                print("Uh Oh! The thing that wasn't supposed to happen just happened!")
+                return 1
+            if len(lines[context - 1].strip()) == n + 1 and working_rebuildcontext != str(dirID):
+                rebuildcontext = rebuildcontext + "," + working_rebuildcontext
+                working_rebuildcontext = ""
+            n = n + 1
 
-            # clear newly freed space from the population array
-            n = 0
-            rebuild_poparray = ""
-            for bit in lines[2].strip():
-                if n == (dirID - 1):
-                    if int(bit) == 1:
-                        rebuild_poparray = rebuild_poparray + "0"
-                    else:
-                        print("How unfortunate. An error has occurred. You should probably go check that")  # let's hope this never happens
-                        return 1
+        lines[context - 1] = rebuildcontext + "\n"  # actually do the thing now
+
+        # clear newly freed space from the population array
+        n = 0
+        rebuild_poparray = ""
+        for bit in lines[2].strip():
+            if n == (dirID - 1):
+                if int(bit) == 1:
+                    rebuild_poparray = rebuild_poparray + "0"
                 else:
-                    rebuild_poparray = rebuild_poparray + bit
-                n = n + 1
-            lines[2] = rebuild_poparray + "\n"
-            #print(lines)
+                    print("How unfortunate. An error has occurred. You should probably go check that")  # let's hope this never happens
+                    return 1
+            else:
+                rebuild_poparray = rebuild_poparray + bit
+            n = n + 1
+        lines[2] = rebuild_poparray + "\n"
+        #print(lines)
 
-            # write to file.
-            self._write_lines(lines)
-
-            #(end of if block, natural return
-        else:
-            print("No such name: \"" + name + "\"")
-            return
-        return
+        # write to file.
+        self._write_lines(lines)
+        return 0
 
     def trace_path(self):
         fslines = self._read_file()
@@ -331,8 +337,11 @@ class File(FSIO):
         global context
         self.lines = self._read_file()
 
-    def check_if_file(self, fileID):
+    def _check_if_file(self, fileID):
         lines = self._read_file()
+        if not self._ensure_exists(fileID):
+            return False
+        #make sure it's a file
         if lines[fileID - 1].split(",")[0].split(":")[0] == "2":
             return True
         else:
@@ -353,43 +362,25 @@ class File(FSIO):
 
     def _decode_data(self, string):
         reconstruction = ""
-        last2letters = []
-        letterCount = 0
-        for letter in string:
-            if letterCount < 2:
-                last2letters.append(letter)
-                letterCount = letterCount + 1
-            elif letterCount == 2:
-                if last2letters[0] != "\\":
-                    reconstruction = reconstruction + last2letters[0]
-                    last2letters[0] = last2letters.pop()
-                    letterCount = letterCount - 1
-                else:
-                    if last2letters[1] == "\\":
-                        reconstruction = reconstruction + "\\"
-                        last2letters.remove(1)
-                        last2letters.remove(0)
-                        letterCount = 0
-                    elif last2letters[1] == "n":
-                        reconstruction = reconstruction + "\n"
-                        last2letters.remove(1)
-                        last2letters.remove(0)
-                        letterCount = 0
-                    elif last2letters[1] == ":":
-                        reconstruction = reconstruction + ":"
-                        last2letters.remove(1)
-                        last2letters.remove(0)
-                        letterCount = 0
+        i = 0
+        while i < len(string):
+            if string[i] == "\\":
+                if i + 1 < len(string):
+                    next_char = string[i + 1]
+                    if next_char == "\\":
+                        reconstruction += "\\"
+                    elif next_char == "n":
+                        reconstruction += "\n"
+                    elif next_char == ":":
+                        reconstruction += ":"
                     else:
-                        reconstruction = reconstruction + last2letters[0] + last2letters[1]
-                        last2letters.remove(1)
-                        last2letters.remove(0)
-                        letterCount = 0
-                last2letters.append(letter)
-                letterCount = letterCount + 1
+                        reconstruction += "\\" + next_char  # Preserve unknown escape sequences
+                    i += 1  # Skip the next character since it was part of an escape sequence
+                else:
+                    reconstruction += "\\"  # Edge case: trailing backslash
             else:
-                print("ruh roh")
-                return 1
+                reconstruction += string[i]
+            i += 1
         return reconstruction
 
     def _new_file_in_lines(self, name):
@@ -509,11 +500,11 @@ class File(FSIO):
         # write to file.
         self._write_lines(lines)
 
-    def _write_file_data(self, data, fileID):
+    def write_file_data_from_ID(self, data, fileID):
         lines = self._read_file()
 
         #checking that fileID is what it says it is
-        if not self.check_if_file(fileID):
+        if not self._check_if_file(fileID):
             print("Error: given object not a file")
             return 1
         if len(lines[fileID - 1].split(":")) < 5:
@@ -541,6 +532,65 @@ class File(FSIO):
             n = n + 1
         result = fileStub + encodedData + "\n"
         lines[fileID -1] = result
+        self._write_lines(lines)
+        return 0
+
+    def write_file_data_from_name(self, data, filename):
+        lines = self._read_file()
+        global context
+        contextLs = self.ret_ls()
+        if filename not in contextLs:
+            print("No entry named \"" + filename + "\"")
+            return 1
+
+        # find the id of the target file, make sure target object is in fact a file
+        preHereItems = self.lines[context - 1].split(",")
+        hereitems = []  # to contain an array of all the child objects in the current directory
+        n = 0
+        for i in preHereItems:
+            if n > 0:
+                hereitems.append(i)
+            n = n + 1
+        targetLines = ""
+        n = 0
+        fileID = 0
+        for i in hereitems:
+            targetLines = targetLines + self.lines[int(i) - 1]
+            if self.lines[int(i) - 1].split(",")[0].split(":")[1] == filename:
+                fileID = int(i)
+            # break
+            n = n + 1
+
+        # checking that fileID is what it says it is
+        if not self._check_if_file(fileID):
+            print("Error: given object not a file")
+            return 1
+        if len(lines[fileID - 1].split(":")) < 5:
+            print("Error: incorrectly formatted or possibly corrupt file..?")
+            return 1
+
+        # encoding the data depending on the provided data's type, appending it to the stub, writing it to lines, and writing lines,
+        encodedData = ""
+        if isinstance(data, str):
+            encodedData = encodedData + self._encode_data(data)
+        elif isinstance(data, list):
+            for section in data:
+                encodedData = encodedData + self._encode_data(section)
+        else:
+            print(
+                "it would interest you to know that you passed an impossible datatype to a function. data being typecast to string;")
+            data = str(data)
+            encodedData = encodedData + self._encode_data(data)
+        # get just the object stub from the line
+        fileStub = ""
+        n = 0
+        for section in lines[fileID - 1].strip().split(":"):
+            if n == 4:
+                break
+            fileStub = fileStub + section + ":"
+            n = n + 1
+        result = fileStub + encodedData + "\n"
+        lines[fileID - 1] = result
         self._write_lines(lines)
         return 0
 
@@ -599,9 +649,9 @@ class File(FSIO):
             else:
                 data = data + prompt + "\n"
             n = n + 1
-        self._write_file_data(data, fileID)
+        self.write_file_data_from_ID(data, fileID)
 
-    def _ret_file_data(self, filename):
+    def ret_file_data_from_name(self, filename):
         self.lines = self._read_file()
         global context
         contextLs = self.ret_ls()
@@ -631,16 +681,25 @@ class File(FSIO):
             print("There seems to have been a problem. This is deeply unfortunate.")
             self.lines = self._read_file()
             return 1
-        if not self.check_if_file(targetID):
-            print(filename + ": Not a file or unknown type")
+
+        decoded = self.ret_file_data_from_ID(targetID)
+        #print(decoded)
+        return decoded
+
+    def ret_file_data_from_ID(self, fileID):
+        self.lines = self._read_file()
+        global context
+
+        if not self._check_if_file(fileID):
+            print("Not a file or unknown type")
             return 1
 
-        #fetch the file data, decode it, then return it
+        # fetch the file data, decode it, then return it
         n = 0
         filedata = ""
         filedatalist = []
-        for section in self.lines[targetID - 1].split(":"):
-            if n > 3:                               #remember n starts at zero
+        for section in self.lines[fileID - 1].strip().split(":"):
+            if n > 3:  # remember n starts at zero
                 filedatalist.append(section)
             if n > 4:
                 filedatalist.append(":" + section)
@@ -648,10 +707,8 @@ class File(FSIO):
         for section in filedatalist:
             filedata = filedata + section
         decoded = self._decode_data(filedata)
+        print(decoded)
         return decoded
-
-
-
 
 
 
@@ -662,7 +719,8 @@ class FS:
 
 
 
-
+global fs
+fs = FS("testing.txt")
 
 
 

@@ -1,38 +1,16 @@
 import time
 import sys
-from .fs import FS
-fs = FS("testing.txt")
-
+from .fs import fs
+from .programs import progs
 #Setup:
 #   all the functions at the top, then cash function which opens the virt-fs, starts the main loop and refreshes the fs every loop
 #   otherwise, the cash function works very similarly to the main catconsole program. will likely replace CatConsole's default cl
 
-def help_func(dct):
-    for name in dct.keys():
-        print(" " + name)
-    return 0
-
-progs = {                   #structure= key:[function, argument count, help string(haven't done yet)]
-    "quit": [lambda: sys.exit(), 0, ""],
-    "cc": [lambda: exec("break"), 0, ""],
-    "help": [lambda: help_func(progs), 0, ""],
-    "cd": [lambda arg: fs.dir.cd(arg), 1, ""],
-    "ls": [lambda: fs.dir.ls(), 0, ""],
-    "mkdir": [lambda arg: fs.dir.mkdir(arg), 1, ""],
-    "rmdir": [lambda arg: fs.dir.rmdir(arg), 1, ""],
-    "testfunc": [lambda: test_func(), 0, ""],
-    "rm": [lambda arg: fs.file.rmfile(arg), 1, ""],
-    "del": [lambda arg: fs.file.rmfile(arg), 1, ""],
-    "touch": [lambda arg: fs.file.mkfile(arg), 1, ""],
-    "retfd": [lambda  arg: fs.file._ret_file_data(arg), 1, ""],
-    "edit": [lambda arg: fs.file.edit_file(arg), 1, ""]
-}
 
 global context
 # the file object is currently always global, and the fs-lines array will remain local to each individual function. this is so that functions can edit their respective lines array without affecting other functions, as those changes won't take effect until they are truly written to the file
 
-def test_func():
-    return
+
 
 def cash():
     global context
