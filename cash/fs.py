@@ -51,7 +51,7 @@ class FSIO:
         print(self.lines, "!!!!!!")
         return
 
-    def ret_ls(self):  # returns an array of all the names of the child objects of context
+    def _ret_ls(self):  # returns an array of all the names of the child objects of context
         lines = self._read_file()
         here = lines[context - 1]  # basically equal to the line of the fs we're currently in
         hereitems = here.split(",")  # array of all the individual components of the current directory
@@ -72,6 +72,33 @@ class FSIO:
             ls_list.append(dirname)
             n = n + 1
         return ls_list
+
+    def _ret_objectID(self, name):
+        lines = self.lines
+
+        if name not in self._ret_ls():
+            print("\"" + name + "\" not found")
+            return 1
+
+        # looking for what child object matches the provided name
+        n = 0
+        objectID = 0
+        foundID = False  # contingency, realistically there's no reason we shouldn't find the ID if nameexists == True
+        while not foundID:
+            if n > len(lines[context - 1].split(",")):
+                break
+            if lines[context - 1].split(",")[n].strip() == name:
+                foundID = True
+                objectID = n
+                break
+            n += 1
+
+        # just in case; this SHOULD never happen though, right?? :)
+        if not foundID:
+            print("An unexpected error has occurred. Please go cry in a corner as necessary.")
+            return 1
+
+        return objectID
 
     def _mk_child_at_context(self):      #modifies self.lines, returns dirID of child object
         # looking for closest space available to write/overwrite new directory, modifying population array as appropriate
@@ -148,7 +175,7 @@ class Dir(FSIO):
                 return 0
 
         # make sure the target directory exists
-        herels = self.ret_ls()
+        herels = self._ret_ls()
         if name not in herels:
             print("No directory named \"" + name + "\"")
             return 1
@@ -187,7 +214,7 @@ class Dir(FSIO):
         if ":" in name or "/" in name or "," in name or "\n" in name or " " in name:
             print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
             return 1
-        allnames = self.ret_ls()
+        allnames = self._ret_ls()
         for i in allnames:
             if i == name:
                 print("That name already exists")
@@ -207,7 +234,7 @@ class Dir(FSIO):
         if ":" in name or "/" in name or "," in name or "\n" in name or " " in name:
             print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
             return 1
-        if name not in self.ret_ls():
+        if name not in self._ret_ls():
             print("No such name: \"" + name + "\"")
             return 1
 
@@ -323,7 +350,7 @@ class Dir(FSIO):
         return cashpath
 
     def ls(self):  # literally just uses ret_ls() and then outputs to console as one string lol
-        local_ret_ls = self.ret_ls()
+        local_ret_ls = self._ret_ls()
         localls = ""
         for i in local_ret_ls:
             localls = localls + i + " "
@@ -394,7 +421,7 @@ class File(FSIO):
             print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
             return 1
 
-        allnames = self.ret_ls()
+        allnames = self._ret_ls()
         for i in allnames:
             if i == name:
                 print("That name already exists")
@@ -410,7 +437,7 @@ class File(FSIO):
         if ":" in name or "/" in name or "," in name or "\n" in name or " " in name:
             print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
             return 1
-        allnames = self.ret_ls()
+        allnames = self._ret_ls()
         nameexists = False
         for i in allnames:
             if i == name:
@@ -538,7 +565,7 @@ class File(FSIO):
     def write_file_data_from_name(self, data, filename):
         lines = self._read_file()
         global context
-        contextLs = self.ret_ls()
+        contextLs = self._ret_ls()
         if filename not in contextLs:
             print("No entry named \"" + filename + "\"")
             return 1
@@ -601,37 +628,11 @@ class File(FSIO):
         if ":" in name or "/" in name or "," in name or "\n" in name or " " in name:
             print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
             return 1
-        allnames = self.ret_ls()
-        nameexists = False
-        for i in allnames:
-            if i == name:
-                nameexists = True
-        if not nameexists:
+        if name not in self._ret_ls():
             print("No such name: \"" + name + "\"")
-            return
-
-        # looking for what child object matches the provided name
-        n = 0
-        fileID = 0
-        foundID = False  # contingency, realistically there's no reason we shouldn't find the ID if nameexists == True
-        for i in lines[context - 1].split(","):
-            if n != 0:
-                if lines[int(i) - 1].split(",")[0].split(":")[1] == name:
-                    fileID = int(i)
-                    foundID = True
-            n = n + 1
-
-        # just in case; this SHOULD never happen though, right?? :)
-        if not foundID:
-            print("An unexpected error has occurred. Please go cry in a corner as necessary.")
             return 1
-
-        # make sure object is a file
-        if lines[fileID - 1].strip().split(",")[0].split(":")[0] == "1":
-            print("\"" + name + "\": is a directory")
-            return 1
-        elif lines[fileID - 1].strip().split(",")[0].split(":")[0] != "2":
-            print("\"" + name + "\": item of unkown type")
+        if not self._check_if_file(self._ret_objectID(name)):
+            print(name + ": Not a file")
             return 1
 
         #prompting user for data to write
@@ -649,12 +650,12 @@ class File(FSIO):
             else:
                 data = data + prompt + "\n"
             n = n + 1
-        self.write_file_data_from_ID(data, fileID)
+        self.write_file_data_from_ID(data, name)
 
     def ret_file_data_from_name(self, filename):
         self.lines = self._read_file()
         global context
-        contextLs = self.ret_ls()
+        contextLs = self._ret_ls()
         if filename not in contextLs:
             print("No entry named \"" + filename + "\"")
             return 1
@@ -699,15 +700,14 @@ class File(FSIO):
         filedata = ""
         filedatalist = []
         for section in self.lines[fileID - 1].strip().split(":"):
-            if n > 3:  # remember n starts at zero
+            if n + 1 == len(self.lines[fileID - 1].strip().split(":")) and n > 3:
                 filedatalist.append(section)
-            if n > 4:
-                filedatalist.append(":" + section)
+            elif n > 3:  # remember n starts at zero
+                filedatalist.append(section + ":")
             n = n + 1
         for section in filedatalist:
             filedata = filedata + section
         decoded = self._decode_data(filedata)
-        print(decoded)
         return decoded
 
 
