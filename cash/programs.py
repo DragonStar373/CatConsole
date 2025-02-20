@@ -1,3 +1,7 @@
+from logging import exception
+
+from numpy.f2py.auxfuncs import throw_error
+
 from .fs import fs
 import sys, os
 
@@ -8,74 +12,74 @@ class PrintColors:
     def __init__(self):
         pass
 
-    def dR(self, skk): print("\033[41m {}\033[00m".format(skk))
+    def dR(skk): print("\033[41m {}\033[00m".format(skk))
 
-    def dG(self, skk): print("\033[42m {}\033[00m".format(skk))
+    def dG(skk): print("\033[42m {}\033[00m".format(skk))
 
-    def dB(self, skk): print("\033[44m {}\033[00m".format(skk))
+    def dB(skk): print("\033[44m {}\033[00m".format(skk))
 
-    def dY(self, skk): print("\033[43m {}\033[00m".format(skk))
+    def dY(skk): print("\033[43m {}\033[00m".format(skk))
 
-    def dM(self, skk): print("\033[45m {}\033[00m".format(skk))
+    def dM(skk): print("\033[45m {}\033[00m".format(skk))
 
-    def dC(self, skk): print("\033[46m {}\033[00m".format(skk))
+    def dC(skk): print("\033[46m {}\033[00m".format(skk))
 
-    def black(self, skk): print("\033[40m {}\033[00m".format(skk))
+    def blackBG(skk): print("\033[40m {}\033[00m".format(skk))
 
-    def white(self, skk): print("\033[37m {}\033[00m".format(skk))
+    def white(skk): print("\033[37m {}\033[00m".format(skk))
 
-    def lGray(self, skk): print("\033[47m {}\033[00m".format(skk))
+    def lGray(skk): print("\033[47m {}\033[00m".format(skk))
 
-    def dGray(self, skk): print("\033[30m {}\033[00m".format(skk))
+    def black(skk): print("\033[30m {}\033[00m".format(skk))
 
-    def lR(self, skk): print("\033[31m {}\033[00m".format(skk))
+    def lR(skk): print("\033[31m {}\033[00m".format(skk))
 
-    def lG(self, skk): print("\033[32m {}\033[00m".format(skk))
+    def lG(skk): print("\033[32m {}\033[00m".format(skk))
 
-    def lB(self, skk): print("\033[34m {}\033[00m".format(skk))
+    def lB(skk): print("\033[34m {}\033[00m".format(skk))
 
-    def lY(self, skk): print("\033[33m {}\033[00m".format(skk))
+    def lY(skk): print("\033[33m {}\033[00m".format(skk))
 
-    def lM(self, skk): print("\033[35m {}\033[00m".format(skk))
+    def lM(skk): print("\033[35m {}\033[00m".format(skk))
 
-    def lC(self, skk): print("\033[36m {}\033[00m".format(skk))
+    def lC(skk): print("\033[36m {}\033[00m".format(skk))
 
 class RetColors:
 
     def __init__(self):
         pass
 
-    def dR(self, skk): return "\033[41m {}\033[00m".format(skk)
+    def rBG(skk): return "\033[41m {}\033[00m".format(skk)
 
-    def dG(self, skk): return "\033[42m {}\033[00m".format(skk)
+    def gBG(skk): return "\033[42m {}\033[00m".format(skk)
 
-    def dB(self, skk): return "\033[44m {}\033[00m".format(skk)
+    def bBG(skk): return "\033[44m {}\033[00m".format(skk)
 
-    def dY(self, skk): return "\033[43m {}\033[00m".format(skk)
+    def yBG(skk): return "\033[43m {}\033[00m".format(skk)
 
-    def dM(self, skk): return "\033[45m {}\033[00m".format(skk)
+    def mBG(skk): return "\033[45m {}\033[00m".format(skk)
 
-    def dC(self, skk): return "\033[46m {}\033[00m".format(skk)
+    def cBG(skk): return "\033[46m {}\033[00m".format(skk)
 
-    def black(self, skk): return "\033[40m {}\033[00m".format(skk)
+    def blackBG(skk): return "\033[40m {}\033[00m".format(skk)
 
-    def white(self, skk): return "\033[37m {}\033[00m".format(skk)
+    def gray(skk): return "\033[37m {}\033[00m".format(skk)
 
-    def lGray(self, skk): return "\033[47m {}\033[00m".format(skk)
+    def grayBG(skk): return "\033[47m {}\033[00m".format(skk)
 
-    def dGray(self, skk): return "\033[30m {}\033[00m".format(skk)
+    def black(skk): return "\033[30m {}\033[00m".format(skk)
 
-    def lR(self, skk): return "\033[31m {}\033[00m".format(skk)
+    def lR(skk): return "\033[31m {}\033[00m".format(skk)
 
-    def lG(self, skk): return "\033[32m {}\033[00m".format(skk)
+    def lG(skk): return "\033[32m {}\033[00m".format(skk)
 
-    def lB(self, skk): return "\033[34m {}\033[00m".format(skk)
+    def lB(skk): return "\033[34m {}\033[00m".format(skk)
 
-    def lY(self, skk): return "\033[33m {}\033[00m".format(skk)
+    def lY(skk): return "\033[33m {}\033[00m".format(skk)
 
-    def lM(self, skk): return "\033[35m {}\033[00m".format(skk)
+    def lM(skk): return "\033[35m {}\033[00m".format(skk)
 
-    def lC(self, skk): return "\033[36m {}\033[00m".format(skk)
+    def lC(skk): return "\033[36m {}\033[00m".format(skk)
 
 rColored = RetColors
 pColored = PrintColors
@@ -97,26 +101,55 @@ def ls():
     lsList = []
 
     for i in lsOutput:
-        print(i)
         if fs.file.ret_object_type_by_name(i) == 1:
-            lsList.append(rColored.dB(i))
+            lsList.append(rColored.lC(i + " "))
         elif fs.file.ret_object_type_by_name(i) == 2:
-            lsList.append(rColored.lGray(i))
+            lsList.append(rColored.lG(i + " "))
         else:
-            lsList.append(rColored.dGray(i))
+            lsList.append(rColored.lR(i + " "))
 
-    print(lsList)
+    divByColumn = False
+    try:
+        consoleWidth = os.get_terminal_size().columns
+        divByColumn = True
+    except OSError:
+        consoleWidth = 0
+        divByColumn = False
 
-    consoleWidth = os.get_terminal_size().columns
+
+
     stringToPrint = ""
     if len(lsList) < 5:
-        pass
+        if False:#replace false with "divByColumn" when ready
+            pass
+        else:
+            n = 1
+            for i in lsList:
+                if n >= len(lsList):
+                    stringToPrint = stringToPrint + i
+                else:
+                    stringToPrint = stringToPrint + i + " "
     elif len(lsList) < 10:
+        if False:
+            pass
+        else:
+            n = 1
+            for i in lsList:
+                if n < 6:
+                    n = 0
+                    stringToPrint = stringToPrint + "\n" + i + " "
+                else:
+                    if n >= len(lsList):
+                        stringToPrint = stringToPrint + i
+                    else:
+                        stringToPrint = stringToPrint + i + " "
+
+    else:
         pass
 
-    #goal:
 
-    #print(localls)
+
+    print(stringToPrint)
     return 0
 
 def help_func(dct):
@@ -144,6 +177,7 @@ global progs
 # noinspection PyRedeclaration
 progs = {                   #structure= key:[function, argument count, help string(haven't done yet)]
     "quit": [lambda: sys.exit(), 0, ""],
+    "exit": [lambda: sys.exit(), 0, ""],
     "cc": [lambda: exec("break"), 0, ""],
     "help": [lambda: help_func(progs), 0, ""],
     "cd": [lambda arg: fs.dir.cd(arg), 1, ""],

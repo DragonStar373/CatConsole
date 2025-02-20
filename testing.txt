@@ -1,8 +1,8 @@
 4
 0
-11110001000
-0:/::,8
-
+11111001000
+0:/::,8,5
+1:hi:4
 
 
 2:file.txt:4::dawg PLS work\nProblem\: this HAS to work or im fucked\nlets try a backslash\: \\\nfingers crossed\n

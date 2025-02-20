@@ -80,21 +80,18 @@ class FSIO:
             print("\"" + name + "\" not found")
             return 1
 
-        print(lines[context - 1].split(","))
-
         # looking for what child object matches the provided name
         n = 0
         objectID = 0
         foundID = False  # contingency, realistically there's no reason we shouldn't find the ID if nameexists == True
-        while not foundID:
+
+        for i in lines[context - 1].split(","):
             if n > 0:
-                if n >= len(lines[context - 1].split(",")):
-                    break
-                if lines[int(lines[context - 1].split(",")[n].strip()) - 1].split(":")[1] == name:
+                if lines[int(i) - 1].split(":")[1].strip() == name.strip():
                     foundID = True
-                    objectID = n
+                    objectID = int(i)
                     break
-            n += 1
+            n = n + 1
 
         # just in case; this SHOULD never happen though, right?? :)
         if not foundID:
@@ -106,7 +103,7 @@ class FSIO:
     def ret_object_type(self, objectID):
         lines = self._read_file()
         if self._ensure_exists(objectID):
-            return lines[objectID - 1].strip().split(":")[0]
+            return int(lines[objectID - 1].strip().split(":")[0])
         else:
             print("Item does not exist or has no data")
             return False
@@ -114,6 +111,9 @@ class FSIO:
     def ret_object_type_by_name(self, name):
         objectID = self.ret_objectID(name)
         return self.ret_object_type(objectID)
+
+    def ret_full_path(self, objectID):
+        pass #should include object name, with / at the end if it is a dir
 
     def _mk_child_at_context(self):      #modifies self.lines, returns dirID of child object
         # looking for closest space available to write/overwrite new directory, modifying population array as appropriate
@@ -340,7 +340,7 @@ class Dir(FSIO):
         self._write_lines(lines)
         return 0
 
-    def trace_path(self):
+    def ret_path_at_context(self):
         fslines = self._read_file()
         currentpath = []
         tracecontext = context
@@ -363,6 +363,9 @@ class Dir(FSIO):
             for i in currentpath[::-1]:  # reverse of array for loop
                 cashpath = cashpath + i
         return cashpath
+
+    def ret_path(self, dirID):
+        pass #should only be for dirs, / at the end
 
 
 
@@ -718,6 +721,9 @@ class File(FSIO):
             filedata = filedata + section
         decoded = self._decode_data(filedata)
         return decoded
+
+    def ret_path(self, fileID):
+        pass #should only be for files
 
 
 

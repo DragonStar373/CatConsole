@@ -15,7 +15,7 @@ global context
 def cash():
     global context
     #check if root, start building current path
-    cashpath = fs.dir.trace_path()
+    cashpath = fs.dir.ret_path_at_context()
 
     cashcat = input("" + cashpath + " >$")
 
