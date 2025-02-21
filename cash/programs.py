@@ -1,34 +1,31 @@
-from logging import exception
-
-from numpy.f2py.auxfuncs import throw_error
-
 from .fs import fs
 import sys, os
 
 global context
+
 
 class PrintColors:
 
     def __init__(self):
         pass
 
-    def dR(skk): print("\033[41m {}\033[00m".format(skk))
+    def rBG(skk): print("\033[41m {}\033[00m".format(skk))
 
-    def dG(skk): print("\033[42m {}\033[00m".format(skk))
+    def gBG(skk): print("\033[42m {}\033[00m".format(skk))
 
-    def dB(skk): print("\033[44m {}\033[00m".format(skk))
+    def bBG(skk): print("\033[44m {}\033[00m".format(skk))
 
-    def dY(skk): print("\033[43m {}\033[00m".format(skk))
+    def yBG(skk): print("\033[43m {}\033[00m".format(skk))
 
-    def dM(skk): print("\033[45m {}\033[00m".format(skk))
+    def mBG(skk): print("\033[45m {}\033[00m".format(skk))
 
-    def dC(skk): print("\033[46m {}\033[00m".format(skk))
+    def cBG(skk): print("\033[46m {}\033[00m".format(skk))
 
     def blackBG(skk): print("\033[40m {}\033[00m".format(skk))
 
-    def white(skk): print("\033[37m {}\033[00m".format(skk))
+    def gray(skk): print("\033[37m {}\033[00m".format(skk))
 
-    def lGray(skk): print("\033[47m {}\033[00m".format(skk))
+    def grayBG(skk): print("\033[47m {}\033[00m".format(skk))
 
     def black(skk): print("\033[30m {}\033[00m".format(skk))
 
@@ -84,78 +81,152 @@ class RetColors:
 rColored = RetColors
 pColored = PrintColors
 
-#ls:
-#no more than 6 per line UNLESS total number of items is more than 30 -- > 6x5 for listing items
-#hard max of 8 per line
-#recursively add items - if an item being added would clip the string in the console, don't add it and set that limit as the total row length limit -- requires getting console width
-#if item# == 31 to 42: row length = 7; else, row length = max 8
 
-#determine console width first, then separate into strings -- if any of the strings exceed console width, reduce row length and retry
+def ls():       #in the future: make it accept arguments, such as for listing order or for only listing certain items
 
+    def default_assembly(itemList, count):
+        locStringToPrint = ""
+        n = 1
 
-def print_ls_line():
-    pass
+        if count == 0 or count is None or not count:
+            for i in itemList:
+                locStringToPrint = locStringToPrint + i + " "
+            return locStringToPrint
 
-def ls():
+        for i in itemList:
+            if n >= count + 1:
+                n = 0
+                locStringToPrint = locStringToPrint + "\n" + i + " "
+            else:
+                if n == count:
+                    locStringToPrint = locStringToPrint + i
+                else:
+                    locStringToPrint = locStringToPrint + i + " "
+            n = n + 1
+        return locStringToPrint
+
+    def assembly_with_console(itemList, retLs, count):#assumes itemList and retLs have equal lengths; requires both because the color tags tend to skew how long a word will actually be
+        currentLine = ""
+        currentUncoloredLine = ""
+        finalString = ""
+        currentList = []
+        n = 0
+        while True:
+            #to treat as if part of a for loop; an actual for loop is not feasible as we must iterate over both the colored and uncolored items
+            if n >= len(itemList):
+                break
+            i = itemList[n]
+            # make sure that at any point, if an item won't fit, it abandons everything and just does the default
+            if len(i) >= consoleWidth:
+                finalString = default_assembly(itemList, count)
+                currentLine = ""
+                break
+            #iteration
+            if len(currentUncoloredLine + retLs[n] + " ") < consoleWidth and len(currentList) < count:  # if it fits and is less than / equal to count:
+                currentLine = currentLine + i + " "
+                currentUncoloredLine = currentUncoloredLine + retLs[n] + " "
+                currentList.append(i)
+            elif len(currentUncoloredLine + retLs[n]) > consoleWidth or len(currentList) >= (count):  # if the reduced version doesn't fit or is more than count:
+                currentLine = currentLine + "\n" + i
+                finalString = finalString + currentLine
+                currentLine = ""
+                currentUncoloredLine = ""
+                currentList = []
+            else:  # if the reduced version does fit and the line is less than / equal to count
+                currentLine = currentLine + i + "\n"
+                finalString = finalString + currentLine
+                currentLine = ""
+                currentUncoloredLine = ""
+                currentList = []
+            n = n + 1
+
+        if currentLine != "":  # in case the last working line never got added to the final string
+            finalString = finalString + currentLine
+        return finalString
+
     lsOutput = fs.dir.ret_ls()
     lsList = []
 
+    #reformats the default ret_ls() output with colors and spaces
     for i in lsOutput:
         if fs.file.ret_object_type_by_name(i) == 1:
-            lsList.append(rColored.lC(i + " "))
+            lsList.append(rColored.lC(i))
         elif fs.file.ret_object_type_by_name(i) == 2:
-            lsList.append(rColored.lG(i + " "))
+            lsList.append(rColored.lG(i))
         else:
-            lsList.append(rColored.lR(i + " "))
+            lsList.append(rColored.lR(i))
 
-    divByColumn = False
+    #attempts to get current terminal width, with a fallback in place if it throws an exception
     try:
         consoleWidth = os.get_terminal_size().columns
         divByColumn = True
     except OSError:
         consoleWidth = 0
         divByColumn = False
-
-
-
+    #formats arrangement so that each line never exceeds the width of the console or the total max item count per amount of items; falls back to a default method if any single item is ever too big or if console width could not be determined
     stringToPrint = ""
-    if len(lsList) < 5:
-        if False:#replace false with "divByColumn" when ready
-            pass
+    if divByColumn:
+        if len(lsList) < 31:
+            stringToPrint = assembly_with_console(lsList, lsOutput, 8)
+        elif len(lsList) < 43:
+            stringToPrint = assembly_with_console(lsList, lsOutput, 10)
         else:
-            n = 1
-            for i in lsList:
-                if n >= len(lsList):
-                    stringToPrint = stringToPrint + i
-                else:
-                    stringToPrint = stringToPrint + i + " "
-    elif len(lsList) < 10:
-        if False:
-            pass
-        else:
-            n = 1
-            for i in lsList:
-                if n < 6:
-                    n = 0
-                    stringToPrint = stringToPrint + "\n" + i + " "
-                else:
-                    if n >= len(lsList):
-                        stringToPrint = stringToPrint + i
-                    else:
-                        stringToPrint = stringToPrint + i + " "
-
+            stringToPrint = assembly_with_console(lsList, lsOutput, 16)
     else:
-        pass
+        stringToPrint = default_assembly(lsList, 10)
+
 
 
 
     print(stringToPrint)
     return 0
 
-def help_func(dct):
-    for name in dct.keys():
-        print(" " + name)
-    return 0
+def help_func(dictionary, *args):
+    if len(args[0][0]) > 0:
+        if len(args[0][0]) > 1:
+            print("help: Too many arguments")
+            return 1
+        else:
+            if args[0][0][0].lower() in dictionary.keys():
+                if len(dictionary[args[0][0][0].lower()][2]) > 0:
+                    if dictionary[args[0][0][0].lower()][2][0] != "*":
+                        print(dictionary[args[0][0][0].lower()][2])
+                    elif len(dictionary[args[0][0][0].lower()][2]) > 1:
+                        print("Command references another command; however, this functionality has not yet been expanded on because I am lazy. Too bad, very sad.")
+                    else:
+                        print("No help data available")#i know this can be made better, but idc
+                else:
+                    print("No help data available")
+            else:
+                print(args[0][0][0] + ": No such command")
+    else:
+        fullHelpString = ""
+        listHeader = ""
+        n = 0
+        for name in dictionary.keys():
+            helpString = dictionary[name][2]
+            if name == "DictName":
+                if len(dictionary[name]) >= 4:
+                    listHeader = dictionary[name][3]
+                    n = n - 1
+            elif len(helpString) > 0:
+                if helpString[0] != '*':
+                    if n > 0:
+                        fullHelpString = fullHelpString + ("\n" + "  " + name)
+                    else:
+                        fullHelpString = fullHelpString + ("  " + name)
+            else:
+                if n > 0:
+                    fullHelpString = fullHelpString + ("\n" + "  " + name)
+                else:
+                    fullHelpString = fullHelpString + ("  " + name)
+            n = n + 1
+        if listHeader != "":
+            print(listHeader)
+        print(fullHelpString)
+        print("Use \"help {command}\" for more information")
+
+        return 0
 
 def test_func():
     return
@@ -175,20 +246,20 @@ def jaguar(filename):
 
 global progs
 # noinspection PyRedeclaration
-progs = {                   #structure= key:[function, argument count, help string(haven't done yet)]
+progs = {           #structure= key:[function, argument count, help string(haven't done yet)];      if argument count == -1 (or any negative value), program takes any number of operators;     if help string starts with "*", do not display in help menu
+    "DictName": [lambda: exec("break"), 0, "*", "System Commands"],
     "quit": [lambda: sys.exit(), 0, ""],
-    "exit": [lambda: sys.exit(), 0, ""],
-    "cc": [lambda: exec("break"), 0, ""],
-    "help": [lambda: help_func(progs), 0, ""],
+    "exit": [lambda: sys.exit(), 0, "*"],
+    "cc": [lambda: exec("break"), 0, "*"],
+    "help": [lambda *args: help_func(progs, args), -1, "This is the help command!"],
     "cd": [lambda arg: fs.dir.cd(arg), 1, ""],
     "ls": [lambda: ls(), 0, ""],
     "mkdir": [lambda arg: fs.dir.mkdir(arg), 1, ""],
     "rmdir": [lambda arg: fs.dir.rmdir(arg), 1, ""],
-    "testfunc": [lambda: test_func(), 0, ""],
+    "testfunc": [lambda: test_func(), 0, "*"],
     "rm": [lambda arg: fs.file.rmfile(arg), 1, ""],
-    "del": [lambda arg: fs.file.rmfile(arg), 1, ""],
+    "del": [lambda arg: fs.file.rmfile(arg), 1, "*"],
     "touch": [lambda arg: fs.file.mkfile(arg), 1, ""],
     "echo": [lambda  arg: print(fs.file.ret_file_data_from_name(arg)), 1, ""],
     "edit": [lambda arg: fs.file.edit_file(arg), 1, ""],
 }
-

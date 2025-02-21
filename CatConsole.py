@@ -28,7 +28,7 @@ builtin = {
     "nyan": [lambda: nyanfunction(), 0, ""],
     "rcat": [lambda: rcat(), 0, ""],
     "repeatingcat": [lambda: rcat(), 0, ""],
-    "help": [lambda: help_func(builtin), 0, ""]
+    "help": [lambda *args: help_func(builtin, args), -1, "This is the help command!"]
 }
 if mazeImported:
     builtin["maze"] = [lambda: mazik(), 0, ""]
@@ -37,6 +37,23 @@ while True:
     cashret = cash()
     if isinstance(cashret, str):
         if str(cashret).lower().split(" ")[0] in builtin:
+            if builtin[cashret.lower().split(" ")[0]][1] < 0:
+                commandargs = []
+                execcommand = "builtin[cashret.lower().split(" ")[0]][0](["
+                # creates list of all the arguments posed after the command
+                for i in range(1, len(cashret.lower().split(" "))):  # no need for the -1, because we need that extra number anyways
+                    commandargs.append(cashret.split(" ")[i])
+                #
+                n = 0
+                for arg in commandargs:
+                    if n == 0:
+                        execcommand = execcommand + "\"" + arg + "\""
+                    else:
+                        execcommand = execcommand + ", " + "\"" + arg + "\""
+                    n = n + 1
+                execcommand = execcommand + "])"
+                # print(execcommand)
+                exec(execcommand)
             if (len(cashret.lower().split(" ")) - 1) > builtin[cashret.lower().split(" ")[0]][1]:
                 print(str(cashret.lower().split(" ")[0]) + ": Too many arguments")
             elif (len(cashret.lower().split(" ")) - 1) < builtin[cashret.lower().split(" ")[0]][1]:
@@ -45,8 +62,7 @@ while True:
                 commandargs = []
                 execcommand = "builtin[cashret.lower().split(" ")[0]][0]("
                 n = 0
-                for i in range(1, len(cashret.lower().split(
-                        " "))):  # no need for the -1, because we need that extra number anyways
+                for i in range(1, len(cashret.lower().split(" "))):  # no need for the -1, because we need that extra number anyways
                     commandargs.append(cashret.lower().split(" ")[i])
                 for arg in commandargs:
                     if n == 0:
@@ -58,4 +74,12 @@ while True:
                 exec(execcommand)
         else:
             print(str(cashret).lower().split(" ")[0] +": No such command")
+    elif isinstance(cashret, int):
+        if cashret == 1:
+            finishedOnError = True
+        elif cashret != 0:
+            finishedOnError = True
+            print("Unknown error in Cash")
+        else:
+            finishedOnError = False
 print("Goodbye")

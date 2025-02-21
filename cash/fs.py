@@ -74,7 +74,7 @@ class FSIO:
         return ls_list
 
     def ret_objectID(self, name):
-        lines = self.lines
+        lines = self._read_file()
 
         if name not in self.ret_ls():
             print("\"" + name + "\" not found")
@@ -237,9 +237,6 @@ class Dir(FSIO):
         dirID = self._mk_child_at_context()     #after this statement, local "lines" variable no longer necessary as the function automatically alters self.lines
         self.lines[dirID] = "1:" + name + ":" + str(context) + "\n"
         self._write_lines(self.lines)
-        #print("mkdir (next 2 lines): ")
-        #print(self.lines)
-        #print(lines)
         return 0
 
     def rmdir(self, name):
