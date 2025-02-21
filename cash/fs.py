@@ -657,9 +657,13 @@ class File(FSIO):
                 else:
                     return 0
             else:
-                data = data + prompt + "\n"
+                if n > 0:
+                    data = data + "\n" + prompt
+                else:
+                    data = data + prompt
             n = n + 1
-        self.write_file_data_from_ID(data, name)
+        self.write_file_data_from_name(data, name)
+        return 0
 
     def ret_file_data_from_name(self, filename):
         self.lines = self._read_file()

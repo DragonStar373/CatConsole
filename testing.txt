@@ -1,12 +1,12 @@
 4
 0
-111111110000
-0:/::,8,5,6,7
+111111101000
+0:/::,5,6,7,9
 1:hi:4
 2:hello.txt:4::
 1:newdir:4
-2:file.txt:4::dawg PLS work\nProblem\: this HAS to work or im fucked\nlets try a backslash\: \\\nfingers crossed\n
 
+2:file:4::pls work\nim begging
 
 
 
