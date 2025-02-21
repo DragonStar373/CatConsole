@@ -229,10 +229,13 @@ class Dir(FSIO):
         if ":" in name or "/" in name or "," in name or "\n" in name or " " in name:
             print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
             return 1
+        elif name == "." or name == "..":
+            print("Invalid name: directory cannot be named \".\" or \"..\"")
+            return 1
         allnames = self.ret_ls()
         for i in allnames:
             if i == name:
-                print("That name already exists")
+                print("An item with that name already exists")
                 return 1
         dirID = self._mk_child_at_context()     #after this statement, local "lines" variable no longer necessary as the function automatically alters self.lines
         self.lines[dirID] = "1:" + name + ":" + str(context) + "\n"
@@ -429,13 +432,14 @@ class File(FSIO):
         if ":" in name or "/" in name or "," in name or "\n" in name or " " in name:
             print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
             return 1
-
+        elif name == "." or name == "..":
+            print("Invalid name: file cannot be named \".\" or \"..\"")
+            return 1
         allnames = self.ret_ls()
         for i in allnames:
             if i == name:
-                print("That name already exists")
+                print("An item with that name already exists")
                 return 1
-
         self._write_lines(self._new_file_in_lines(name))
         return 0
 

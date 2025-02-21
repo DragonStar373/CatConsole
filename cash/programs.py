@@ -182,17 +182,41 @@ def ls():       #in the future: make it accept arguments, such as for listing or
     return 0
 
 def help_func(dictionary, *args):
-    if len(args[0][0]) > 0:
+    if len(args[0][0]) > 0:# if command was passed with arguments?
+        argumentOne = args[0][0][0].lower()
         if len(args[0][0]) > 1:
             print("help: Too many arguments")
             return 1
         else:
-            if args[0][0][0].lower() in dictionary.keys():
-                if len(dictionary[args[0][0][0].lower()][2]) > 0:
-                    if dictionary[args[0][0][0].lower()][2][0] != "*":
-                        print(dictionary[args[0][0][0].lower()][2])
-                    elif len(dictionary[args[0][0][0].lower()][2]) > 1:
-                        print("Command references another command; however, this functionality has not yet been expanded on because I am lazy. Too bad, very sad.")
+            if argumentOne in dictionary.keys():
+                if len(dictionary[argumentOne][2]) > 0:#if the help string isn't empty
+                    if dictionary[argumentOne][2][0] != "*":#if the first letter of the help string equals something other than "*"
+                        print("  " + rColored.lB(argumentOne) + ":")#prints the command name
+                        n = 0
+                        for line in dictionary[argumentOne][2].split("\n"):
+                            if n < 1:
+                                print(rColored.gray(line))
+                            else:
+                                print(rColored.gray(" " + line))
+                    elif len(dictionary[argumentOne][2]) > 1:
+                        if dictionary[argumentOne][2][1] != "*":
+                            n = 0
+                            correctedHelpString = ""
+                            while n < len(dictionary[argumentOne][2]):
+                                if n == 0:
+                                    n = 1
+                                else:
+                                    correctedHelpString = correctedHelpString + dictionary[argumentOne][2][n]
+                                    n = n + 1
+                            print("  " + rColored.lB(argumentOne) + ":")
+                            n = 0
+                            for line in correctedHelpString.split("\n"):
+                                if n < 1:
+                                    print(rColored.gray(line))
+                                else:
+                                    print(rColored.gray(" " + line))
+                        else:
+                            print("Command references another command; however, this functionality has not yet been expanded on because I am lazy. Too bad, very sad.")
                     else:
                         print("No help data available")#i know this can be made better, but idc
                 else:
@@ -245,21 +269,24 @@ def jaguar(filename):
 
 
 global progs
+#after the *, hidden commands either A: contain the help string for that command or B: contain another * followed by the name of a command whose help string should be referenced
 # noinspection PyRedeclaration
 progs = {           #structure= key:[function, argument count, help string(haven't done yet)];      if argument count == -1 (or any negative value), program takes any number of operators;     if help string starts with "*", do not display in help menu
     "DictName": [lambda: exec("break"), 0, "*", "System Commands"],
-    "quit": [lambda: sys.exit(), 0, ""],
-    "exit": [lambda: sys.exit(), 0, "*"],
-    "cc": [lambda: exec("break"), 0, "*"],
+    "quit": [lambda: sys.exit(), 0, "Command used to close CatConsole\nTakes no arguments"],
+    "exit": [lambda: sys.exit(), 0, "**quit"],
     "help": [lambda *args: help_func(progs, args), -1, "This is the help command!"],
-    "cd": [lambda arg: fs.dir.cd(arg), 1, ""],
-    "ls": [lambda: ls(), 0, ""],
-    "mkdir": [lambda arg: fs.dir.mkdir(arg), 1, ""],
-    "rmdir": [lambda arg: fs.dir.rmdir(arg), 1, ""],
-    "testfunc": [lambda: test_func(), 0, "*"],
-    "rm": [lambda arg: fs.file.rmfile(arg), 1, ""],
-    "del": [lambda arg: fs.file.rmfile(arg), 1, "*"],
-    "touch": [lambda arg: fs.file.mkfile(arg), 1, ""],
-    "echo": [lambda  arg: print(fs.file.ret_file_data_from_name(arg)), 1, ""],
+    "cd": [lambda arg: fs.dir.cd(arg), 1, "Command used to change directory (ie. move to a new folder)\nTarget directory must located in current directory; use the `ls` command to view items in current directory\nPass `..` as an argument to back out of current directory\nRequires one argument: `cd {directory_name}`"],
+    "ls": [lambda: ls(), 0, "Command used to list all items in the current directory\nListed items are colorcoded, with directories shown in cyan and files shown in green\nTakes no arguments"],
+    "mkdir": [lambda arg: fs.dir.mkdir(arg), 1, "Command used to create a new directory/folder inside of the current one\nNew directory name cannot be \".\", \"..\", or a duplicate of another item in the current directory\nRequires one argument: `mkdir {directory_name}`"],
+    "rmdir": [lambda arg: fs.dir.rmdir(arg), 1, "Command used to remove a directory\nTarget directory must be located in current directory and must be empty\nRequires one argument: `rmdir {directory_name}`"],
+    "testfunc": [lambda: test_func(), 0, "*Function for internal testing"],
+    "rm": [lambda arg: fs.file.rmfile(arg), 1, "Command used to remove a file\nTarget file must be located in current directory\nRequires one argument: `rm {file_name}`"],
+    "del": [lambda arg: fs.file.rmfile(arg), 1, "**rm"],
+    "touch": [lambda arg: fs.file.mkfile(arg), 1, "**mkfile"],
+    "mkfile": [lambda arg: fs.file.mkfile(arg), 1, "Command used to create a new file inside of the current directory\nFile name cannot be \".\", \"..\", or a duplicate of another item in the current directory\nRequires one argument: `mkfile {file_name}`"],
+    "echo": [lambda  arg: print(fs.file.ret_file_data_from_name(arg)), 1, "Command used to echo the contents of a file (ie. display the file's data)\nRequires one argument: `echo {file_name}`"],
     "edit": [lambda arg: fs.file.edit_file(arg), 1, ""],
+    "jaguar": [lambda arg: jaguar(arg), 1, "*"],
+    "jag": [lambda arg: jaguar(arg), 1, "**jaguar"],
 }
