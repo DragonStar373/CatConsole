@@ -376,7 +376,7 @@ class File(FSIO):
         global context
         self.lines = self._read_file()
 
-    def _check_if_file(self, fileID):
+    def check_if_file(self, fileID):
         lines = self._read_file()
         if not self._ensure_exists(fileID):
             return False
@@ -544,7 +544,7 @@ class File(FSIO):
         lines = self._read_file()
 
         #checking that fileID is what it says it is
-        if not self._check_if_file(fileID):
+        if not self.check_if_file(fileID):
             print("Error: given object not a file")
             return 1
         if len(lines[fileID - 1].split(":")) < 5:
@@ -582,27 +582,13 @@ class File(FSIO):
         if filename not in contextLs:
             print("No entry named \"" + filename + "\"")
             return 1
+        if ":" in filename or "/" in filename or "," in filename or "\n" in filename or " " in filename:
+            print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
+            return 1
 
         # find the id of the target file, make sure target object is in fact a file
-        preHereItems = self.lines[context - 1].split(",")
-        hereitems = []  # to contain an array of all the child objects in the current directory
-        n = 0
-        for i in preHereItems:
-            if n > 0:
-                hereitems.append(i)
-            n = n + 1
-        targetLines = ""
-        n = 0
-        fileID = 0
-        for i in hereitems:
-            targetLines = targetLines + self.lines[int(i) - 1]
-            if self.lines[int(i) - 1].split(",")[0].split(":")[1] == filename:
-                fileID = int(i)
-            # break
-            n = n + 1
-
-        # checking that fileID is what it says it is
-        if not self._check_if_file(fileID):
+        fileID = self.ret_objectID(filename)
+        if not self.check_if_file(fileID):
             print("Error: given object not a file")
             return 1
         if len(lines[fileID - 1].split(":")) < 5:
@@ -644,7 +630,7 @@ class File(FSIO):
         if name not in self.ret_ls():
             print("No such name: \"" + name + "\"")
             return 1
-        if not self._check_if_file(self.ret_objectID(name)):
+        if not self.check_if_file(self.ret_objectID(name)):
             print(name + ": Not a file")
             return 1
 
@@ -708,7 +694,7 @@ class File(FSIO):
         self.lines = self._read_file()
         global context
 
-        if not self._check_if_file(fileID):
+        if not self.check_if_file(fileID):
             print("Not a file or unknown type")
             return 1
 

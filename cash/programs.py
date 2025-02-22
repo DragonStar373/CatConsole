@@ -182,47 +182,95 @@ def ls():       #in the future: make it accept arguments, such as for listing or
     return 0
 
 def help_func(dictionary, *args):
+    referenceVarToMakeSureWeDontLoopForever = []
+    def print_help_str(thingToPrint, commandName):
+        print("  " + rColored.lB(commandName) + ":")  # prints the command name
+        n = 0
+        for line in thingToPrint.split("\n"):
+            if n < 1:
+                print(rColored.gray(line))
+            else:
+                print(rColored.gray(" " + line))
+        return 0
+
+    def parse_help_str(commandName):
+        if commandName in dictionary.keys():
+            if len(dictionary[commandName][2]) > 0:  # if the help string isn't empty
+                if dictionary[commandName][2][0] != "*":  # if the first letter of the help string equals something other than "*"
+                    print_help_str(dictionary[commandName][2], commandName)
+                elif len(dictionary[commandName][2]) > 1:  # if the first letter of the help string equals "*" and the help string has more than one char
+                    if dictionary[commandName][2][1] != "*":  # if the second letter of the help string equals something other than "*"
+                        n = 0
+                        correctedHelpString = ""
+                        while n < len(dictionary[commandName][2]):
+                            if n == 0:
+                                n = 1
+                            else:
+                                correctedHelpString = correctedHelpString + dictionary[commandName][2][n]
+                                n = n + 1
+                        print_help_str(correctedHelpString, commandName)
+                    else:#if the first two letters are "**"
+                        n = 0
+                        referencedCommandName = ""
+                        while n < len(dictionary[commandName][2]):
+                            if n < 2:
+                                n = 2
+                            else:
+                                referencedCommandName = referencedCommandName + dictionary[commandName][2][n]
+                                n = n + 1
+                        if referencedCommandName.lower().strip() in dictionary.keys():
+                            if referencedCommandName in referenceVarToMakeSureWeDontLoopForever:
+                                print("Invalid reference: command \"" + commandName + "\" causes reference loop in help")
+                                return 2
+                            else:
+                                referenceVarToMakeSureWeDontLoopForever.append(referencedCommandName)
+                                recursiveExecution = parse_help_str(referencedCommandName)
+                                if isinstance(recursiveExecution, bool):
+                                    if not recursiveExecution:
+                                        print(args[0][0][0] + ": References nonexistant command")
+                                elif isinstance(recursiveExecution, int):
+                                    if recursiveExecution == 0:
+                                        return 0
+                                    elif recursiveExecution == 1:
+                                        return 1
+                                    else:
+                                        return 1
+                                else:
+                                    return None
+                        else:
+                            print("Invalid reference: command references command \"" + referencedCommandName + "\", however no such command can be found")
+                            return 1
+                else:
+                    print("No help data available")  # i know this can be made better, but idc
+                    return 1
+            else:
+                print("No help data available")
+                return 1
+        else:
+            return False
+        return 0
+
     if len(args[0][0]) > 0:# if command was passed with arguments?
-        argumentOne = args[0][0][0].lower()
+        argumentOne= args[0][0][0].lower()
         if len(args[0][0]) > 1:
             print("help: Too many arguments")
             return 1
         else:
-            if argumentOne in dictionary.keys():
-                if len(dictionary[argumentOne][2]) > 0:#if the help string isn't empty
-                    if dictionary[argumentOne][2][0] != "*":#if the first letter of the help string equals something other than "*"
-                        print("  " + rColored.lB(argumentOne) + ":")#prints the command name
-                        n = 0
-                        for line in dictionary[argumentOne][2].split("\n"):
-                            if n < 1:
-                                print(rColored.gray(line))
-                            else:
-                                print(rColored.gray(" " + line))
-                    elif len(dictionary[argumentOne][2]) > 1:
-                        if dictionary[argumentOne][2][1] != "*":
-                            n = 0
-                            correctedHelpString = ""
-                            while n < len(dictionary[argumentOne][2]):
-                                if n == 0:
-                                    n = 1
-                                else:
-                                    correctedHelpString = correctedHelpString + dictionary[argumentOne][2][n]
-                                    n = n + 1
-                            print("  " + rColored.lB(argumentOne) + ":")
-                            n = 0
-                            for line in correctedHelpString.split("\n"):
-                                if n < 1:
-                                    print(rColored.gray(line))
-                                else:
-                                    print(rColored.gray(" " + line))
-                        else:
-                            print("Command references another command; however, this functionality has not yet been expanded on because I am lazy. Too bad, very sad.")
-                    else:
-                        print("No help data available")#i know this can be made better, but idc
+            parsedHelp = parse_help_str(argumentOne)
+            if isinstance(parsedHelp, bool):
+                if not parsedHelp:
+                    print(args[0][0][0] + ": No such command")
+            elif isinstance(parsedHelp, int):
+                if parsedHelp == 0:
+                    return 0
+                elif parsedHelp == 1:
+                    return 1
                 else:
-                    print("No help data available")
+                    print("\"help " + argumentOne + "\": There was an unknown error in help. This is ungood.")
+                    return 1
             else:
-                print(args[0][0][0] + ": No such command")
+                print("There was an unknown error in help. This is ungood.")
+                return 1
     else:
         fullHelpString = ""
         listHeader = ""
@@ -256,12 +304,24 @@ def test_func():
     return
 
 def jaguar(filename):
-    return
-
-
-
-
-
+    print("Enter desired data to be written.\nAfter entering data, type \"QQ\" to quit and write to file, or type \"QQ\" now to leave file untouched")
+    data = ""
+    n = 0
+    userEndedSession = False
+    while not userEndedSession:
+        prompt = input().strip()
+        if prompt == "QQ":
+            if n > 0:
+                userEndedSession = True
+            else:
+                return 0
+        else:
+            if n > 0:
+                data = data + "\n" + prompt
+            else:
+                data = data + prompt
+        n = n + 1
+        return 1
 
 
 
