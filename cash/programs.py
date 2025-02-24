@@ -81,6 +81,49 @@ class RetColors:
 rColored = RetColors
 pColored = PrintColors
 
+def copy_file(name, destination):
+    global context
+    preserveContext = []
+    preserveContext.append(context)
+    if name not in fs.dir.ret_ls():
+        print("No such file: \"" + name + "\" not found")
+        return 1
+    if fs.file.ret_object_type_by_name(name) != 2:
+        print("Error: attempting to copy file, but object is not a file")
+        return 1
+    fileData = fs.file.ret_file_data_from_name(name)
+    if not isinstance(fileData, str):
+        print("Cannot proceed with operation")
+        return 1
+    processing = ""
+    currentDirID = context
+    for char in destination:
+        if char == "/":
+            if processing == "..":
+                currentDirID = fs.dir.ret_cd("..", currentDirID)
+                processing = ""
+                if currentDirID == -1:
+                    print("Cannot proceed with operation")
+                    return 1
+            else:
+                currentDirID = fs.dir.ret_cd(processing, currentDirID)
+                processing = ""
+                if currentDirID == -1:
+                    print("Cannot proceed with operation")
+                    return 1
+        else:
+            processing = processing + char
+    context = currentDirID
+    testMkFile = fs.file.mkfile(name)
+    if testMkFile != 0:
+        print("Cannot proceed with operation")
+        return 1
+    testWriteData = fs.file.write_file_data_from_name(fileData, name)
+    if testWriteData != 0:
+        print("Cannot proceed with operation")
+        return 1
+    context = preserveContext[0]
+    return 0
 
 def ls():       #in the future: make it accept arguments, such as for listing order or for only listing certain items
 
@@ -323,7 +366,138 @@ def jaguar(filename):
         n = n + 1
         return 1
 
+def mv(*args):
+    def mv_file(name, destination):
 
+        testCP = copy_file(name, destination)
+        return 0
+
+    def mv_dir(name, destination):
+        print("not used yet")
+        return 0
+
+    if len(args[0][0]) == 1:
+        if args[0][0].lower() == "file" or args[0][0].lower() == "f":
+            print("Enter file name:")
+            ls()
+            fName = input(">:")
+            if fName not in fs.dir.ret_ls():
+                print("No such file: \"" + fName + "\" not found")
+                return 1
+            dName = input("Enter destination name:\n>:")
+            mv_file(fName, dName)
+        elif args[0][0].lower() == "folder" or args[0][0].lower() == "directory" or args[0][0].lower() == "dir" or args[0][0].lower() == "d":
+            print("Enter directory name:")
+            ls()
+            fName = input(">:")
+            if fName not in fs.dir.ret_ls():
+                print("No such directory: \"" + fName + "\" not found")
+                return 1
+            dName = input("Enter destination directory:\n>:")
+            mv_dir(fName, dName)
+        elif args[0][0] in fs.dir.ret_ls():
+            dName = input("Enter destination directory:\n>:")
+            if fs.file.check_if_file(fs.file.ret_objectID(args[0][0])):
+                mv_file(args[0][0], dName)
+            elif fs.dir.check_if_dir(fs.file.ret_objectID(args[0][0])):
+                mv_dir(args[0][0], dName)
+            else:
+                print("Error: object of unknown type")
+                return 1
+        else:
+            print("Bad input: \"" + args[0][0] + "\" is not valid input")
+            return 1
+    elif len(args[0]) == 2:
+        if args[0][0].lower() == "file" or args[0][0].lower() == "f":
+            if args[0][1].lower() in fs.dir.ret_ls():
+                if not fs.file.check_if_file(fs.file.ret_objectID(args[0][1])):
+                    print("Error: \"" + args[0][1] + "\" is not a file")
+                    return 1
+                dName = input("Enter destination directory:\n>:")
+                mv_file(args[0][1], dName)
+        elif args[0][0].lower() == "folder" or args[0][0].lower() == "directory" or args[0][0].lower() == "dir" or args[0][0].lower() == "d":
+            if args[0][1].lower() in fs.dir.ret_ls():
+                if not fs.dir.check_if_dir(fs.file.ret_objectID(args[0][1])):
+                    print("Error: \"" + args[0][1] + "\" is not a directory")
+                    return 1
+                dName = input("Enter destination directory:\n>:")
+                mv_dir(args[0][1], dName)
+        elif args[0][0].lower() in fs.dir.ret_ls():
+            if fs.file.check_if_file(fs.file.ret_objectID(args[0][0])):
+                mv_file(args[0][0], args[0][1])
+            elif fs.dir.check_if_dir(fs.file.ret_objectID(args[0][0])):
+                mv_dir(args[0][0], args[0][1])
+            else:
+                print("Error: object of unknown type")
+                return 1
+        else:
+            print("Bad input: \"" + args[0][0] + "\" is not valid input")
+            return 1
+    elif len(args[0]) == 3:
+        if args[0][0].lower() == "file" or args[0][0].lower() == "f":
+            if args[0][1].lower() in fs.dir.ret_ls():
+                if not fs.file.check_if_file(fs.file.ret_objectID(args[0][1])):
+                    print("Error: \"" + args[0][1] + "\" is not a file")
+                    return 1
+                mv_file(args[0][1], args[0][2])
+        elif args[0][0].lower() == "folder" or args[0][0].lower() == "directory" or args[0][0].lower() == "dir" or args[0][0].lower() == "d":
+            if args[0][1].lower() in fs.dir.ret_ls():
+                if not fs.dir.check_if_dir(fs.file.ret_objectID(args[0][1])):
+                    print("Error: \"" + args[0][1] + "\" is not a directory")
+                    return 1
+                mv_dir(args[0][1], args[0][2])
+        elif args[0][0].lower() in fs.dir.ret_ls():
+            if fs.file.check_if_file(fs.file.ret_objectID(args[0][0])):
+                mv_file(args[0][0], args[0][1])
+            elif fs.dir.check_if_dir(fs.file.ret_objectID(args[0][0])):
+                mv_dir(args[0][0], args[0][1])
+            else:
+                print("Error: object of unknown type")
+                return 1
+        else:
+            print("Bad input: \"" + args[0][0] + "\" is not valid input")
+            return 1
+    elif len(args[0]) > 3:
+        print("Error: too much input")
+    else:
+        print("What would you like to move? (file, directory)")
+        inp = input(">:")
+        if inp.lower() == "file" or inp.lower() == "f":
+            print("Enter file name:")
+            ls()
+            fName = input(">:")
+            if fName not in fs.dir.ret_ls():
+                print(fName + ": Not found")
+                return 1
+            if not fs.file.check_if_file(fs.file.ret_objectID(fName)):
+                print("Error: \"" + fName + "\" is not a file")
+                return 1
+            dName = input("Enter destination name:\n>:")
+            mv_file(fName, dName)
+        elif inp.lower() == "folder" or inp.lower() == "directory" or inp.lower() == "dir" or inp.lower() == "d":
+            print("Enter directory name:")
+            ls()
+            fName = input(">:")
+            if fName not in fs.dir.ret_ls():
+                print(fName + ": Not found")
+                return 1
+            if not fs.dir.check_if_dir(fs.file.ret_objectID(fName)):
+                print("Error: \"" + fName + "\" is not a directory")
+                return 1
+            dName = input("Enter destination directory:\n>:")
+            mv_dir(fName, dName)
+        elif inp in fs.dir.ret_ls():
+            dName = input("Enter destination directory:\n>:")
+            if fs.file.check_if_file(fs.file.ret_objectID(inp)):
+                mv_file(args[0][0], inp)
+            elif fs.dir.check_if_dir(fs.file.ret_objectID(inp)):
+                mv_dir(args[0][0], inp)
+            else:
+                print("Error: object of unknown type")
+                return 1
+        else:
+            print("Bad input: \"" + inp + "\" is not valid input")
+            return 1
 
 
 
@@ -347,6 +521,7 @@ progs = {           #structure= key:[function, argument count, help string(haven
     "mkfile": [lambda arg: fs.file.mkfile(arg), 1, "Command used to create a new file inside of the current directory\nFile name cannot be \".\", \"..\", or a duplicate of another item in the current directory\nRequires one argument: `mkfile {file_name}`"],
     "echo": [lambda  arg: print(fs.file.ret_file_data_from_name(arg)), 1, "Command used to echo the contents of a file (ie. display the file's data)\nRequires one argument: `echo {file_name}`"],
     "edit": [lambda arg: fs.file.edit_file(arg), 1, ""],
+    "move": [lambda *args: mv(args), -1, "Command to move files/directories\nDoes not require static amount of arguments"],
     "jaguar": [lambda arg: jaguar(arg), 1, "*"],
     "jag": [lambda arg: jaguar(arg), 1, "**jaguar"],
 }

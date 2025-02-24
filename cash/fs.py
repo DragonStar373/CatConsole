@@ -174,28 +174,33 @@ class Dir(FSIO):
         else:
             return False
 
-    def cd(self, name):  #
+    def ret_cd(self, name, *startingContext):
         global context
+        if len(startingContext) > 0:
+            tempContext = startingContext[0]
+        else:
+            tempContext = context
         lines = self._read_file()
-
-        here = lines[context - 1]  # basically equal to the line of the fs we're currently in
+        here = lines[tempContext - 1]  # basically equal to the line of the fs we're currently in
         hereitems = here.split(",")  # array of all the individual components of the current directory
 
-        # see if the command is asking to "cd ..", in which case context is switched to the directory's parent dir (assuming context != root)
+        # see if the command is asking to "cd ..", in which case tempContext is switched to the directory's parent dir (assuming tempContext != root)
         if name == "..":
             if hereitems[0].split(":")[2] != "":
-                context = int(hereitems[0].split(":")[2])
-                return 0
+                tempContext = int(hereitems[0].split(":")[2])
+                return tempContext
             else:
-                return 0
+                return tempContext
+        if name == "/":
+            return int(self.lines[0])
 
         # make sure the target directory exists
         herels = self.ret_ls()
         if name not in herels:
             print("No directory named \"" + name + "\"")
-            return 1
+            return -1
 
-        # create array of all the child-objects of the current directory; find which one matches the target directory; make sure the target directory is actually a directory, if so then change context to match
+        # create array of all the child-objects of the current directory; find which one matches the target directory; make sure the target directory is actually a directory, if so then change tempContext to match
         dir_list = []
         n = 0
         targetID = 0
@@ -212,15 +217,24 @@ class Dir(FSIO):
             if dir_list[n].split(",")[0].split(":")[1] == name.strip():
                 # print("AAAAAA")
                 if dir_list[n].split(",")[0].split(":")[0] != "1":
-                    print("Not a directory")
-                    return 1
+                    print(name + ": Not a directory")
+                    return -1
                 else:
                     # print("WAWAWAWA")
-                    context = targetID
-                    return 0
+                    tempContext = targetID
+                    return tempContext
             n = n + 1
         print("Something went wrong...")
-        return 1
+        return -1
+
+    def cd(self, name):
+        global context
+        preserveContext = context
+        context = self.ret_cd(name)
+        if context == -1 or context == None:
+            context = preserveContext
+            return 1
+        return 0
 
     def mkdir(self, name):  # assuming the new dir name is valid and available: locates closest free fs line on population array (if any, otherwise just adds to it), uses that line for new dir, and adds line# to current dir and makes dir at that line
         lines = self._read_file()
@@ -428,7 +442,7 @@ class File(FSIO):
         self.lines[dirID] = "2:" + str(name) + ":" + str(context) + "::" + "\n"
         return self.lines
 
-    def mkfile(self, name):
+    def mkfile(self, name, *targetContext):
         if ":" in name or "/" in name or "," in name or "\n" in name or " " in name:
             print("Invalid name: cannot contain spaces, \":\", \",\", \"/\", or \"\\n\"")
             return 1
