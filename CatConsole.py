@@ -4,6 +4,7 @@ from cash import cash, help_func
 from carmode import carmode
 from REPEATINGCAT import rcat
 from nyan import nyanfunction
+global context
 global mazeImported
 try:
     from maze.mazik import mazik
@@ -20,7 +21,7 @@ except ImportError:
 #Setup:
 #   Imports all subprograms, takes variable "fox" as input, and compares it to a list of all commands
 #
-global context
+
 
 builtin = {
     "carmode": [lambda: carmode(), 0, ""],

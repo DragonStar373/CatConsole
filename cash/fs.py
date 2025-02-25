@@ -29,6 +29,7 @@ class FSIO:
             self.lines = self._read_file()
         context = int(self.lines[0])
 
+
     def _read_file(self):
         with open(self.fileName, "r+") as self.file:
             self.file.seek(0)
@@ -107,6 +108,10 @@ class FSIO:
         else:
             print("Item does not exist or has no data")
             return False
+
+    def ret_context(self):
+        global context
+        return context
 
     def ret_object_type_by_name(self, name):
         objectID = self.ret_objectID(name)
@@ -226,6 +231,13 @@ class Dir(FSIO):
             n = n + 1
         print("Something went wrong...")
         return -1
+
+    def arbitrary_cd(self, dirID):
+        global context
+        self.lines = self._read_file()
+        if not self.check_if_dir(dirID):
+            print(self.lines[dirID -1].split(",")[0].split(":")[1] + ": Not a directory")
+        context = dirID
 
     def cd(self, name):
         global context
@@ -741,7 +753,6 @@ class FS:
 
 global fs
 fs = FS("testing.txt")
-
 
 
 

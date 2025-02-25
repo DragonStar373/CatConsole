@@ -1,4 +1,4 @@
-from .fs import fs
+from .cash import fs
 import sys, os
 
 global context
@@ -82,9 +82,7 @@ rColored = RetColors
 pColored = PrintColors
 
 def copy_file(name, destination):
-    global context
-    preserveContext = []
-    preserveContext.append(context)
+    preserveContext = fs.dir.ret_context()
     if name not in fs.dir.ret_ls():
         print("No such file: \"" + name + "\" not found")
         return 1
@@ -96,9 +94,11 @@ def copy_file(name, destination):
         print("Cannot proceed with operation")
         return 1
     processing = ""
-    currentDirID = context
+    currentDirID = fs.dir.ret_context()
+    isFancy = False
     for char in destination:
         if char == "/":
+            isFancy = True
             if processing == "..":
                 currentDirID = fs.dir.ret_cd("..", currentDirID)
                 processing = ""
@@ -113,17 +113,30 @@ def copy_file(name, destination):
                     return 1
         else:
             processing = processing + char
-    context = currentDirID
-    testMkFile = fs.file.mkfile(name)
-    if testMkFile != 0:
-        print("Cannot proceed with operation")
-        return 1
-    testWriteData = fs.file.write_file_data_from_name(fileData, name)
-    if testWriteData != 0:
-        print("Cannot proceed with operation")
-        return 1
-    context = preserveContext[0]
-    return 0
+    if isFancy:
+        fs.dir.arbitrary_cd(currentDirID)
+        testMkFile = fs.file.mkfile(name)
+        if testMkFile != 0:
+            print("Cannot proceed with operation")
+            return 1
+        testWriteData = fs.file.write_file_data_from_name(fileData, name)
+        if testWriteData != 0:
+            print("Cannot proceed with operation")
+            return 1
+        fs.dir.arbitrary_cd(preserveContext)
+        return 0
+    else:
+        fs.dir.cd(processing)
+        testMkFile = fs.file.mkfile(name)
+        if testMkFile != 0:
+            print("Cannot proceed with operation")
+            return 1
+        testWriteData = fs.file.write_file_data_from_name(fileData, name)
+        if testWriteData != 0:
+            print("Cannot proceed with operation")
+            return 1
+        fs.dir.arbitrary_cd(preserveContext)
+        return 0
 
 def ls():       #in the future: make it accept arguments, such as for listing order or for only listing certain items
 
@@ -367,12 +380,14 @@ def jaguar(filename):
         return 1
 
 def mv(*args):
+    global context
     def mv_file(name, destination):
-
+        global context
         testCP = copy_file(name, destination)
         return 0
 
     def mv_dir(name, destination):
+        global context
         print("not used yet")
         return 0
 
