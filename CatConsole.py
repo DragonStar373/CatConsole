@@ -22,6 +22,7 @@ except ImportError:
 #   Imports all subprograms, takes variable "fox" as input, and compares it to a list of all commands
 #
 
+# God bless anyone who tries to decipher this project
 
 builtin = {
     "carmode": [lambda: carmode(), 0, ""],

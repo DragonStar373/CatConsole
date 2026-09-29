@@ -359,6 +359,7 @@ def help_func(dictionary, *args):
 def test_func():
     return
 
+# this is supposed to be a built-in text editor. i gave up
 def jaguar(filename):
     print("Enter desired data to be written.\nAfter entering data, type \"QQ\" to quit and write to file, or type \"QQ\" now to leave file untouched")
     data = ""

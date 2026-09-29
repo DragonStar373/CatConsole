@@ -6,7 +6,8 @@ import sys
 #Setup:
 #   all the functions at the top, then cash function which opens the virt-fs, starts the main loop and refreshes the fs every loop
 #   otherwise, the cash function works very similarly to the main catconsole program. will likely replace CatConsole's default cl
-
+#
+#   this file is a MESS
 #global file
 global context
 
